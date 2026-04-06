@@ -800,7 +800,7 @@ function showPage(name) {
 function switchTab(page, tab) {
   document.querySelectorAll(`[id^="tab-${page}-"]`).forEach(t => t.classList.remove('active'));
   document.getElementById(`tab-${page}-${tab}`).classList.add('active');
-  renderTypoContent(tab);
+  renderTypoContent();
 }
 
 // ── Drag & Drop ─────────────────────────────────────────
@@ -1177,28 +1177,6 @@ function renderTypoContent() {
       </div>
     </div>`).join('')}</div>`;
 }
-function _oldRenderTypoContent_unused(tab) {
-  const el = document.getElementById('typo-content');
-  const filtered = state.typoIssues.filter(x => x.type === tab);
-  if (state.pages.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔤</div><div class="empty-title">PDF를 업로드하면 오타 검사가 시작됩니다</div></div>`;
-    return;
-  }
-  if (filtered.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">발견된 오타가 없습니다</div><div class="empty-sub">용어 사전을 더 추가하면 검사 정확도가 높아집니다</div></div>`;
-    return;
-  }
-  el.innerHTML = `<div class="issue-list">${filtered.map(i => `
-    <div class="issue-item sev-${i.sev}">
-      <div class="issue-icon">🔤</div>
-      <div class="issue-content">
-        <div class="issue-title"><span class="highlight">${i.wrong}</span> → <span class="correct">${i.correct}</span></div>
-        <div class="issue-desc">"...${i.context}..."</div>
-        <div class="issue-meta"><span class="issue-page">p.${i.pageNum}</span><span class="issue-tag tag-typo">오타</span></div>
-      </div>
-    </div>`).join('')}</div>`;
-}
-
 function renderNumberContent() {
   const el = document.getElementById('number-content');
   if (state.pages.length === 0) {
@@ -1432,13 +1410,6 @@ function getWordContext(text, word, len) {
   return getContext(text, idx, len);
 }
 function escapeReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-function levenshtein(a, b) {
-  const m = a.length, n = b.length;
-  const dp = Array.from({length:m+1}, (_,i) => Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0));
-  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
-    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
-  return dp[m][n];
-}
 function showToast(icon, msg) {
   const t = document.getElementById('toast');
   document.getElementById('toastIcon').textContent = icon;
