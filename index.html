@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coway ESG 보고서 검증 시스템</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --border: #1e293b;
+    --border2: #2d3748;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --orange: #f97316;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --coway: #00a0e9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-badge {
+    background: linear-gradient(135deg, var(--coway), var(--accent2));
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--text3); }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .badge-blue { background: rgba(59,130,246,.15); color: var(--accent); border: 1px solid rgba(59,130,246,.3); }
+  .badge-green { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+
+  /* Layout */
+  .layout { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 56px); }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .sidebar-section { padding: 16px 12px 8px; }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding: 0 8px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text2);
+    transition: all .15s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(59,130,246,.12); color: var(--accent); }
+  .nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-count {
+    margin-left: auto;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg3);
+    padding: 1px 6px;
+    border-radius: 10px;
+    color: var(--text3);
+  }
+  .nav-count.has-error { background: rgba(239,68,68,.15); color: var(--red); }
+  .nav-count.has-warn { background: rgba(245,158,11,.15); color: var(--yellow); }
+
+  /* Main */
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Upload Area */
+  .upload-area {
+    border: 2px dashed var(--border2);
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--bg2);
+    position: relative;
+  }
+  .upload-area:hover, .upload-area.drag-over {
+    border-color: var(--accent);
+    background: rgba(59,130,246,.04);
+  }
+  .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .upload-sub { font-size: 13px; color: var(--text3); }
+
+  /* Progress */
+  .progress-bar-wrap {
+    background: var(--bg3);
+    border-radius: 4px;
+    height: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width .3s;
+  }
+
+  /* Stats Row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; font-weight: 500; }
+  .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .stat-red .stat-value { color: var(--red); }
+  .stat-yellow .stat-value { color: var(--yellow); }
+  .stat-green .stat-value { color: var(--green); }
+  .stat-blue .stat-value { color: var(--accent); }
+
+  /* Section */
+  .section { margin-bottom: 20px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Issue List */
+  .issue-list { display: flex; flex-direction: column; gap: 6px; }
+  .issue-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: border-color .15s;
+  }
+  .issue-item:hover { border-color: var(--border2); }
+  .issue-item.sev-high { border-left: 3px solid var(--red); }
+  .issue-item.sev-mid { border-left: 3px solid var(--yellow); }
+  .issue-item.sev-low { border-left: 3px solid var(--green); }
+  .issue-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+  .issue-content { flex: 1; min-width: 0; }
+  .issue-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .issue-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .issue-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .issue-page {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    background: var(--bg3);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .issue-tag {
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .tag-typo { background: rgba(239,68,68,.12); color: var(--red); }
+  .tag-number { background: rgba(245,158,11,.12); color: var(--yellow); }
+  .tag-unit { background: rgba(249,115,22,.12); color: var(--orange); }
+  .tag-context { background: rgba(99,102,241,.12); color: var(--accent2); }
+  .tag-image { background: rgba(59,130,246,.12); color: var(--accent); }
+  .highlight {
+    background: rgba(239,68,68,.2);
+    color: var(--red);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .correct {
+    background: rgba(16,185,129,.15);
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* API 설정 패널 */
+  .api-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .api-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .api-panel-title { font-size: 13px; font-weight: 600; }
+  .api-row { display: flex; gap: 8px; align-items: center; }
+  .api-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .api-input:focus { border-color: var(--accent); }
+  .api-input::placeholder { color: var(--text3); }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: 'Pretendard', sans-serif;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-secondary {
+    background: var(--bg3);
+    color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+  .btn-danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+  .btn-danger:hover { background: rgba(239,68,68,.25); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Dictionary Panel */
+  .dict-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .dict-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .dict-tag {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dict-tag .remove {
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .dict-tag .remove:hover { color: var(--red); }
+  .dict-add-row { display: flex; gap: 8px; }
+
+  /* Number Compare */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .compare-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .compare-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: rgba(255,255,255,.02); }
+  .change-up { color: var(--red); font-weight: 600; }
+  .change-down { color: var(--green); font-weight: 600; }
+  .change-ok { color: var(--text3); }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text2); }
+  .empty-sub { font-size: 13px; line-height: 1.6; }
+
+  /* Tab */
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all .15s;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    z-index: 999;
+    display: none;
+    gap: 8px;
+    align-items: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    max-width: 320px;
+  }
+  .toast.show { display: flex; }
+
+  .loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .page-panel { display: none; }
+  .page-panel.active { display: block; }
+
+  .image-page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .image-page-chip {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .image-page-chip.analyzed { border-color: var(--green); color: var(--green); }
+  .image-page-chip.pending { color: var(--text3); }
+
+  .info-box {
+    background: rgba(59,130,246,.06);
+    border: 1px solid rgba(59,130,246,.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-badge">COWAY</div>
+    <div>
+      <div class="header-title">지속경영보고서 검증 시스템</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-blue" id="statusBadge">대기 중</span>
+    <span class="badge badge-green" id="pdfNameBadge" style="display:none"></span>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">분석 메뉴</div>
+      <div class="nav-item active" onclick="showPage('upload')" id="nav-upload">
+        <span class="icon">📄</span> PDF 업로드
+      </div>
+      <div class="nav-item" onclick="showPage('typo')" id="nav-typo">
+        <span class="icon">🔤</span> 오타 검사
+        <span class="nav-count" id="cnt-typo">-</span>
+      </div>
+      <div class="nav-item" onclick="showPage('number')" id="nav-number">
+        <span class="icon">📊</span> 수치 이상값
+        <span class="nav-count" id="cnt-number">-</span>
+      </div>
+      <div class="nav-item" onclick="showPage('unit')" id="nav-unit">
+        <span class="icon">⚠️</span> 단위 오류
+        <span class="nav-count" id="cnt-unit">-</span>
+      </div>
+      <div class="nav-item" onclick="showPage('image')" id="nav-image">
+        <span class="icon">🖼️</span> 이미지 페이지
+        <span class="nav-count" id="cnt-image">-</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">설정</div>
+      <div class="nav-item" onclick="showPage('dict')" id="nav-dict">
+        <span class="icon">📚</span> 용어 사전
+      </div>
+      <div class="nav-item" onclick="showPage('api')" id="nav-api">
+        <span class="icon">🔑</span> API 설정
+      </div>
+    </div>
+    <div class="sidebar-section" style="margin-top:auto; padding-top: 16px; border-top: 1px solid var(--border);">
+      <div style="font-size:11px; color:var(--text3); padding:0 8px; line-height:1.6;">
+        Layer 1: PDF.js (API 0회)<br>
+        Layer 2: 룰 기반 검사<br>
+        Layer 3: Gemini Vision (선택)
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Upload Page -->
+    <div class="page-panel active" id="page-upload">
+      <div class="stats-row" id="statsRow" style="display:none">
+        <div class="stat-card stat-blue">
+          <div class="stat-label">총 페이지</div>
+          <div class="stat-value" id="stat-pages">0</div>
+          <div class="stat-sub">페이지</div>
+        </div>
+        <div class="stat-card stat-red">
+          <div class="stat-label">오타 의심</div>
+          <div class="stat-value" id="stat-typo">0</div>
+          <div class="stat-sub">건</div>
+        </div>
+        <div class="stat-card stat-yellow">
+          <div class="stat-label">수치 이상</div>
+          <div class="stat-value" id="stat-number">0</div>
+          <div class="stat-sub">건</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">이미지 페이지</div>
+          <div class="stat-value" id="stat-image">0</div>
+          <div class="stat-sub">페이지 (API 필요)</div>
+        </div>
+      </div>
+
+      <div class="upload-area" id="uploadArea" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="this.classList.remove('drag-over')">
+        <input type="file" accept=".pdf" onchange="handleFile(event)">
+        <div class="upload-icon">📑</div>
+        <div class="upload-title">보고서 PDF를 업로드하세요</div>
+        <div class="upload-sub">클릭하거나 파일을 드래그&드롭 · 최대 200MB</div>
+      </div>
+
+      <div id="progressArea" style="display:none; margin-top:16px;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text3); margin-bottom:6px;">
+          <span id="progressLabel">텍스트 추출 중...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div id="summaryArea" style="display:none; margin-top:20px;">
+        <div class="section-title" style="margin-bottom:12px;">🔍 분석 결과 요약</div>
+        <div class="issue-list" id="summaryList"></div>
+      </div>
+    </div>
+
+    <!-- Typo Page -->
+    <div class="page-panel" id="page-typo">
+      <!-- 섹션 1: 패턴 오타 (등록된 패턴만) -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🎯 패턴 오타 검사 <span style="font-size:11px; color:var(--text3); font-weight:400; margin-left:6px;">등록된 오타 패턴만 · 오탐 없음</span></div>
+          <span class="badge badge-blue" id="patternCount">-</span>
+        </div>
+        <div id="typo-content">
+          <div class="empty-state">
+            <div class="empty-icon">🔤</div>
+            <div class="empty-title">PDF를 업로드하면 검사가 시작됩니다</div>
+            <div class="empty-sub">용어 사전 메뉴에서 오타 패턴을 등록하면<br>전기자→전기차 같은 오타를 정확하게 잡아냅니다</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border); margin: 20px 0;"></div>
+
+      <!-- 섹션 2: 부산대 맞춤법 검사기 -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🏛️ 부산대 한국어 맞춤법 검사기 <span style="font-size:11px; color:var(--text3); font-weight:400; margin-left:6px;">환경켱영→환경경영 등 진짜 맞춤법 오류</span></div>
+        </div>
+        <div class="info-box">
+          부산대 맞춤법 검사기는 실제 한국어 맞춤법 엔진으로 진짜 오타만 잡아냅니다. PDF 텍스트를 500자 단위로 분할해 순차 검사합니다.
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+          <button class="btn btn-primary" onclick="runPusanSpellCheck()" id="btnPusan">맞춤법 검사 실행</button>
+          <span id="pusanStatus" style="font-size:12px; color:var(--text3);"></span>
+        </div>
+        <div id="pusanResult">
+          <div class="empty-state" style="padding:24px;">
+            <div class="empty-icon">🏛️</div>
+            <div class="empty-title">위 버튼을 눌러 맞춤법 검사를 시작하세요</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Number Page -->
+    <div class="page-panel" id="page-number">
+      <div class="info-box">
+        ⚡ <strong>수치 이상값 검사</strong>: PDF에서 추출된 숫자를 분석하여 전년도 대비 30% 이상 변동된 수치를 표시합니다.<br>
+        전년도 보고서를 비교 파일로 추가 업로드하면 더 정확한 비교가 가능합니다.
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:6px;">전년도 보고서 (선택 · 비교용)</label>
+        <input type="file" accept=".pdf" onchange="handleCompareFile(event)" 
+          style="font-size:12px; color:var(--text2); background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:6px 10px; width:100%; outline:none;">
+      </div>
+      <div id="number-content">
+        <div class="empty-state">
+          <div class="empty-icon">📊</div>
+          <div class="empty-title">PDF를 업로드하면 수치 분석이 시작됩니다</div>
+          <div class="empty-sub">30% 이상 변동 수치, 합계 불일치,<br>이상 패턴을 자동 감지합니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unit Page -->
+    <div class="page-panel" id="page-unit">
+      <div id="unit-content">
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <div class="empty-title">단위 오류 검사</div>
+          <div class="empty-sub">tCO₂e / 톤 / % 혼용, 날짜 형식 오류,<br>숫자-단위 불일치를 감지합니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Page -->
+    <div class="page-panel" id="page-image">
+      <div class="info-box">
+        🖼️ <strong>이미지 페이지</strong>: 텍스트 레이어가 없는 페이지입니다. 그래프, 인포그래픽 등이 이미지로 삽입된 경우 Gemini Vision API로 오타를 분석할 수 있습니다.
+      </div>
+      <div id="image-api-actions" style="margin-bottom:16px; display:none;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <span id="imagePageCount" style="font-size:13px; color:var(--text2);"></span>
+          <button class="btn btn-primary" onclick="analyzeImagePages()" id="btnAnalyzeImages">Gemini Vision으로 분석</button>
+          <span id="imageAnalyzeStatus" style="font-size:12px; color:var(--text3);"></span>
+        </div>
+      </div>
+      <div id="image-content">
+        <div class="empty-state">
+          <div class="empty-icon">🖼️</div>
+          <div class="empty-title">PDF를 업로드하면 이미지 페이지를 분류합니다</div>
+          <div class="empty-sub">이미지 전용 페이지는 Gemini Vision API로<br>오타 및 단위 오류를 검사할 수 있습니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dictionary Page -->
+    <div class="page-panel" id="page-dict">
+      <div class="dict-panel">
+        <div class="api-panel-header">
+          <div class="api-panel-title">📚 회사 용어 사전</div>
+          <button class="btn btn-secondary" onclick="resetDict()" style="font-size:12px; padding:5px 10px;">기본값으로 초기화</button>
+        </div>
+        <div style="font-size:12px; color:var(--text3); margin-bottom:10px;">
+          등록된 올바른 용어입니다. 유사 오타가 발견되면 자동으로 알림을 표시합니다.
+        </div>
+        <div class="dict-tags" id="dictTags"></div>
+        <div class="dict-add-row">
+          <input class="api-input" id="dictInput" placeholder="추가할 용어 입력 (예: 넷제로)" onkeydown="if(event.key==='Enter') addDictWord()">
+          <button class="btn btn-primary" onclick="addDictWord()">추가</button>
+        </div>
+      </div>
+      <div class="dict-panel">
+        <div class="api-panel-header">
+          <div class="api-panel-title">🚫 오타 패턴 사전</div>
+        </div>
+        <div style="font-size:12px; color:var(--text3); margin-bottom:10px;">
+          자주 발생하는 오타 → 올바른 표현 매핑입니다.
+        </div>
+        <div id="typoPatternList" class="issue-list"></div>
+        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+          <input class="api-input" id="typoWrongInput" placeholder="잘못된 표현 (예: 전기자)" style="flex:1; min-width:120px;">
+          <input class="api-input" id="typoCorrectInput" placeholder="올바른 표현 (예: 전기차)" style="flex:1; min-width:120px;">
+          <button class="btn btn-primary" onclick="addTypoPattern()">추가</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Page -->
+    <div class="page-panel" id="page-api">
+      <div class="api-panel">
+        <div class="api-panel-header">
+          <div class="api-panel-title">🔑 Gemini Vision API 설정</div>
+          <span class="badge badge-blue" id="apiStatusBadge">미설정</span>
+        </div>
+        <div style="font-size:12px; color:var(--text3); margin-bottom:12px; line-height:1.6;">
+          이미지로 삽입된 그래프, 인포그래픽의 오타를 검사하는 데 사용됩니다.<br>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);">Google AI Studio</a>에서 무료 API 키를 발급받을 수 있습니다. (일 1,500회 무료)
+        </div>
+        <div class="api-row">
+          <input class="api-input" id="geminiApiKey" type="password" placeholder="AIza...로 시작하는 Gemini API 키 입력">
+          <button class="btn btn-primary" onclick="saveApiKey()">저장</button>
+          <button class="btn btn-secondary" onclick="testApiKey()">테스트</button>
+        </div>
+        <div id="apiTestResult" style="font-size:12px; margin-top:8px; color:var(--text3);"></div>
+      </div>
+      <div class="api-panel">
+        <div class="api-panel-title" style="margin-bottom:10px;">⚙️ 분석 설정</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="chk30pct" checked style="accent-color:var(--accent);">
+            수치 30% 이상 변동 시 경고
+          </label>
+          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="chkUnit" checked style="accent-color:var(--accent);">
+            단위 혼용 감지 (tCO₂e / 톤 / %)
+          </label>
+          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="chkDateFmt" checked style="accent-color:var(--accent);">
+            날짜 형식 불일치 감지
+          </label>
+          <div style="display:flex; align-items:center; gap:10px; font-size:13px;">
+            <span style="color:var(--text2);">수치 변동 임계값</span>
+            <input type="number" id="thresholdPct" value="30" min="1" max="100"
+              style="width:60px; background:var(--bg3); border:1px solid var(--border2); border-radius:4px; padding:4px 8px; color:var(--text); font-size:13px; outline:none;">
+            <span style="color:var(--text3);">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toastIcon">ℹ️</span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── State ──────────────────────────────────────────────
+const state = {
+  pages: [],
+  typoIssues: [],
+  numberIssues: [],
+  unitIssues: [],
+  imagePages: [],
+  imageResults: [],
+  comparePages: [],
+  pusanIssues: [],
+  geminiKey: localStorage.getItem('geminiKey') || '',
+};
+
+// ── Default Dictionary ──────────────────────────────────
+let dict = JSON.parse(localStorage.getItem('esgDict')) || [
+  '코웨이','지속가능경영','온실가스','탄소중립','넷제로','재생에너지',
+  '전기차','태양광','수처리','공기청정기','정수기','비데','매트리스',
+  'Scope1','Scope2','Scope3','tCO₂e','CDP','ESG','KCGS','SBTi',
+  'RE100','REC','PPA','BAU','LCA','GHG','DJSI','GRI','SASB','TCFD',
+  '공급망','이해관계자','이사회','사회적가치','환경경영','안전보건',
+  '임직원','협력사','온실가스배출량','에너지소비량','재생에너지비율',
+];
+let typoPatterns = JSON.parse(localStorage.getItem('typoPatterns')) || [
+  {wrong:'전기자 전환', correct:'전기차 전환'},
+  {wrong:'온신가스', correct:'온실가스'},
+  {wrong:'탄소중닙', correct:'탄소중립'},
+  {wrong:'코웨히', correct:'코웨이'},
+  {wrong:'재생에네지', correct:'재생에너지'},
+  {wrong:'넷재로', correct:'넷제로'},
+  {wrong:'태양관', correct:'태양광'},
+];
+// 기본 패턴 주의: 정상 표현(접두어 포함 단어 등)은 절대 오타로 등록하지 마세요
+
+// ── Unit patterns ─────────────────────────────────────────
+// 날짜 형식(2024.01.01 등)은 ESG 보고서 정상 표기이므로 검사 제외
+const unitPatterns = [
+  { re: /tco2e|tco₂e|TCO2e/g, msg: 'tCO₂e 표기가 올바르지 않습니다 (권장: tCO₂e)', tag: 'tag-unit' },
+];
+
+// ── Navigation ──────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+function switchTab(page, tab) {
+  document.querySelectorAll(`[id^="tab-${page}-"]`).forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${page}-${tab}`).classList.add('active');
+  renderTypoContent(tab);
+}
+
+// ── Drag & Drop ─────────────────────────────────────────
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.add('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') loadPdf(file);
+  else showToast('⚠️', 'PDF 파일만 업로드 가능합니다');
+}
+function handleFile(e) { if (e.target.files[0]) loadPdf(e.target.files[0]); }
+function handleCompareFile(e) { if (e.target.files[0]) loadComparePdf(e.target.files[0]); }
+
+// ── Load PDF ────────────────────────────────────────────
+async function loadPdf(file) {
+  showToast('⏳', 'PDF 로딩 중...');
+  document.getElementById('progressArea').style.display = 'block';
+  document.getElementById('statsRow').style.display = 'grid';
+  document.getElementById('pdfNameBadge').textContent = file.name;
+  document.getElementById('pdfNameBadge').style.display = 'inline-flex';
+  document.getElementById('statusBadge').textContent = '분석 중';
+
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+  const total = pdf.numPages;
+  state.pages = [];
+
+  for (let i = 1; i <= total; i++) {
+    setProgress(Math.round(i / total * 80), `텍스트 추출 중... ${i}/${total} 페이지`);
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items.map(x => x.str).join(' ').trim();
+    state.pages.push({ pageNum: i, text, isImage: text.length < 30 });
+  }
+
+  setProgress(85, '오타 검사 중...');
+  runTypoCheck();
+  setProgress(90, '수치 이상값 검사 중...');
+  runNumberCheck();
+  setProgress(95, '단위 오류 검사 중...');
+  runUnitCheck();
+  setProgress(100, '완료');
+
+  state.imagePages = state.pages.filter(p => p.isImage);
+
+  updateStats();
+  renderSummary();
+  renderTypoContent();
+  renderNumberContent();
+  renderUnitContent();
+  renderImageContent();
+  renderDictPage();
+  renderTypoPatternList();
+
+  document.getElementById('statusBadge').textContent = '분석 완료';
+  showToast('✅', `분석 완료: ${total}페이지 처리`);
+}
+
+async function loadComparePdf(file) {
+  showToast('⏳', '비교 파일 로딩 중...');
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+  state.comparePages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items.map(x => x.str).join(' ').trim();
+    state.comparePages.push({ pageNum: i, text });
+  }
+  runNumberCheck();
+  renderNumberContent();
+  showToast('✅', '비교 파일 로드 완료');
+}
+
+// ── Typo Check ──────────────────────────────────────────
+// 오직 명시적으로 등록된 패턴(잘못된표현→올바른표현)만 검사
+// 레벤슈타인, 반복문자 등 자의적 판단 일절 없음
+function runTypoCheck() {
+  state.typoIssues = [];
+  for (const p of state.pages) {
+    if (p.isImage) continue;
+    for (const pat of typoPatterns) {
+      const re = new RegExp(escapeReg(pat.wrong), 'g');
+      let m;
+      while ((m = re.exec(p.text)) !== null) {
+        state.typoIssues.push({
+          type: 'dict-based',
+          pageNum: p.pageNum,
+          wrong: pat.wrong,
+          correct: pat.correct,
+          context: getContext(p.text, m.index, 80),
+          sev: 'high',
+        });
+      }
+    }
+  }
+}
+
+// ── 부산대 맞춤법 검사 (Vercel Edge Function 프록시 경유) ──────────
+async function runPusanSpellCheck() {
+  if (state.pages.length === 0) { showToast('⚠️', 'PDF를 먼저 업로드하세요'); return; }
+  const btn = document.getElementById('btnPusan');
+  const statusEl = document.getElementById('pusanStatus');
+  btn.disabled = true;
+  state.pusanIssues = [];
+
+  const allText = state.pages.filter(p => !p.isImage).map(p => p.text).join('
+');
+
+  // 500자 단위 청크 분할
+  const chunkSize = 500;
+  const chunks = [];
+  let offset = 0;
+  while (offset < allText.length) {
+    const chunk = allText.slice(offset, offset + chunkSize);
+    // 페이지 번호 추정
+    let pageNum = 1, cumLen = 0;
+    for (const pg of state.pages) {
+      cumLen += pg.text.length + 1;
+      if (offset < cumLen) { pageNum = pg.pageNum; break; }
+    }
+    chunks.push({ text: chunk, offset, pageNum });
+    offset += chunkSize;
+  }
+
+  let done = 0;
+  let hasError = false;
+  for (const chunk of chunks) {
+    statusEl.textContent = `검사 중... ${done + 1}/${chunks.length} (${Math.round((done/chunks.length)*100)}%)`;
+    try {
+      const res = await fetch('/api/spell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: chunk.text }),
+      });
+      if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
+      const data = await res.json();
+
+      if (data.issues && data.issues.length > 0) {
+        for (const issue of data.issues) {
+          const ctx = chunk.text.slice(
+            Math.max(0, chunk.text.indexOf(issue.wrong) - 30),
+            chunk.text.indexOf(issue.wrong) + issue.wrong.length + 30
+          );
+          state.pusanIssues.push({
+            wrong: issue.wrong,
+            correct: issue.correct,
+            pageNum: chunk.pageNum,
+            context: ctx || chunk.text.slice(0, 60),
+          });
+        }
+      }
+      // 부산대 raw HTML 파싱 보조 (이슈 파싱 실패 시 대비)
+      if ((!data.issues || data.issues.length === 0) && data.rawHtml) {
+        const extraIssues = parsePusanRawHtml(data.rawHtml, chunk);
+        state.pusanIssues.push(...extraIssues);
+      }
+    } catch(e) {
+      if (!hasError) {
+        hasError = true;
+        statusEl.textContent = '오류 발생';
+        showToast('❌', '프록시 오류: ' + e.message + ' (Vercel 배포 후 사용 가능)');
+      }
+    }
+    done++;
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  btn.disabled = false;
+  if (!hasError) {
+    statusEl.textContent = `완료 · ${state.pusanIssues.length}건 발견`;
+    showToast('✅', `맞춤법 검사 완료: ${state.pusanIssues.length}건`);
+  }
+  renderPusanResults();
+  updateStats();
+}
+
+// 부산대 응답 HTML 보조 파서
+function parsePusanRawHtml(html, chunk) {
+  const issues = [];
+  // 방식 1: errinfo input 태그 파싱
+  const inputRe = /name="([^"]*)"[^>]*value="([^"]*)"/gi;
+  const fields = {};
+  let m;
+  while ((m = inputRe.exec(html)) !== null) fields[m[1]] = m[2];
+  if (fields.orgStr && fields.candWord && fields.orgStr !== fields.candWord) {
+    const ctx = chunk.text.slice(
+      Math.max(0, chunk.text.indexOf(fields.orgStr) - 30),
+      chunk.text.indexOf(fields.orgStr) + fields.orgStr.length + 30
+    );
+    issues.push({ wrong: fields.orgStr, correct: fields.candWord, pageNum: chunk.pageNum, context: ctx });
+  }
+  return issues;
+}
+
+
+function renderPusanResults() {
+  const el = document.getElementById('pusanResult');
+  if (!state.pusanIssues || state.pusanIssues.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">맞춤법 오류 없음</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="issue-list">${state.pusanIssues.map(i => `
+    <div class="issue-item sev-high">
+      <div class="issue-icon">🔤</div>
+      <div class="issue-content">
+        <div class="issue-title"><span class="highlight">${i.wrong}</span> → <span class="correct">${i.correct}</span></div>
+        <div class="issue-desc">"...${i.context}..."</div>
+        <div class="issue-meta"><span class="issue-page">p.${i.pageNum}</span><span class="issue-tag tag-typo">맞춤법</span></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// ── Number Check ─────────────────────────────────────────
+function runNumberCheck() {
+  state.numberIssues = [];
+  const threshold = parseInt(document.getElementById('thresholdPct')?.value || '30');
+  const numRe = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)/g;
+
+  if (state.comparePages.length === 0) {
+    // Self-check: find duplicate numbers with large variance
+    const allNums = [];
+    for (const p of state.pages) {
+      let m;
+      while ((m = numRe.exec(p.text)) !== null) {
+        const val = parseFloat(m[1].replace(/,/g, ''));
+        if (val > 10 && val < 1e10) allNums.push({ val, pageNum: p.pageNum, raw: m[1] });
+      }
+    }
+    // Check if same ~magnitude numbers have big spread (simple heuristic)
+    return;
+  }
+
+  // Compare with previous year
+  const prevNums = extractNumbersFromPages(state.comparePages);
+  const currNums = extractNumbersFromPages(state.pages);
+
+  // Match by rough value proximity
+  for (const [label, curr] of Object.entries(currNums)) {
+    const prev = prevNums[label];
+    if (!prev) continue;
+    const change = Math.abs((curr.val - prev.val) / prev.val) * 100;
+    if (change >= threshold) {
+      const dir = curr.val > prev.val ? 'up' : 'down';
+      state.numberIssues.push({
+        label,
+        prev: prev.val,
+        curr: curr.val,
+        change: change.toFixed(1),
+        dir,
+        pageNum: curr.pageNum,
+        sev: change >= 50 ? 'high' : 'mid',
+      });
+    }
+  }
+}
+
+function extractNumbersFromPages(pages) {
+  const result = {};
+  const re = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(tCO₂e|톤|MWh|GWh|kWh|%|명|건|억|원)/g;
+  for (const p of pages) {
+    let m;
+    while ((m = re.exec(p.text)) !== null) {
+      const val = parseFloat(m[1].replace(/,/g, ''));
+      const key = m[1] + m[2];
+      if (!result[key]) result[key] = { val, pageNum: p.pageNum, raw: m[1], unit: m[2] };
+    }
+  }
+  return result;
+}
+
+// ── Unit Check ───────────────────────────────────────────
+function runUnitCheck() {
+  state.unitIssues = [];
+  if (!document.getElementById('chkUnit')?.checked) return;
+  for (const p of state.pages) {
+    if (p.isImage) continue;
+    for (const pat of unitPatterns) {
+      if (pat.correct) continue;
+      let m;
+      const re = new RegExp(pat.re.source, pat.re.flags);
+      while ((m = re.exec(p.text)) !== null) {
+        state.unitIssues.push({
+          pageNum: p.pageNum,
+          match: m[0],
+          msg: pat.msg,
+          context: getContext(p.text, m.index, 60),
+          sev: 'mid',
+        });
+      }
+    }
+  }
+}
+
+// ── Render ───────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('stat-pages').textContent = state.pages.length;
+  document.getElementById('stat-typo').textContent = state.typoIssues.length;
+  document.getElementById('stat-number').textContent = state.numberIssues.length;
+  document.getElementById('stat-image').textContent = state.imagePages.length;
+
+  const cn = document.getElementById('cnt-typo');
+  cn.textContent = state.typoIssues.length;
+  cn.className = 'nav-count' + (state.typoIssues.length > 0 ? ' has-error' : '');
+
+  const nn = document.getElementById('cnt-number');
+  nn.textContent = state.numberIssues.length;
+  nn.className = 'nav-count' + (state.numberIssues.length > 0 ? ' has-warn' : '');
+
+  const un = document.getElementById('cnt-unit');
+  un.textContent = state.unitIssues.length;
+  un.className = 'nav-count' + (state.unitIssues.length > 0 ? ' has-warn' : '');
+
+  const img = document.getElementById('cnt-image');
+  img.textContent = state.imagePages.length;
+  img.className = 'nav-count' + (state.imagePages.length > 0 ? ' has-warn' : '');
+}
+
+function renderSummary() {
+  const el = document.getElementById('summaryList');
+  const items = [];
+  if (state.typoIssues.length > 0)
+    items.push(makeIssue('high','🔤',`오타 의심 ${state.typoIssues.length}건 발견`,
+      `사전 기반 검사 결과입니다. <strong>"오타 검사"</strong> 메뉴에서 확인하세요.`,'tag-typo','오타'));
+  if (state.numberIssues.length > 0)
+    items.push(makeIssue('mid','📊',`수치 이상값 ${state.numberIssues.length}건 발견`,
+      `30% 이상 변동 수치입니다. <strong>"수치 이상값"</strong> 메뉴에서 확인하세요.`,'tag-number','수치'));
+  if (state.unitIssues.length > 0)
+    items.push(makeIssue('mid','⚠️',`단위 오류 ${state.unitIssues.length}건 발견`,
+      `단위 혼용 또는 형식 오류입니다. <strong>"단위 오류"</strong> 메뉴에서 확인하세요.`,'tag-unit','단위'));
+  if (state.imagePages.length > 0)
+    items.push(makeIssue('low','🖼️',`이미지 페이지 ${state.imagePages.length}개 발견`,
+      `텍스트 추출 불가 페이지입니다. Gemini Vision API로 추가 분석 가능합니다.`,'tag-image','이미지'));
+  if (items.length === 0)
+    items.push(makeIssue('low','✅','이상 없음','오타 및 단위 오류가 발견되지 않았습니다.','tag-typo','정상'));
+  el.innerHTML = items.join('');
+  document.getElementById('summaryArea').style.display = 'block';
+}
+
+function makeIssue(sev, icon, title, desc, tag, tagLabel, page) {
+  return `<div class="issue-item sev-${sev}">
+    <div class="issue-icon">${icon}</div>
+    <div class="issue-content">
+      <div class="issue-title">${title}</div>
+      <div class="issue-desc">${desc}</div>
+      ${page ? `<div class="issue-meta"><span class="issue-page">p.${page}</span><span class="issue-tag ${tag}">${tagLabel}</span></div>` : `<div class="issue-meta"><span class="issue-tag ${tag}">${tagLabel}</span></div>`}
+    </div>
+  </div>`;
+}
+
+function renderTypoContent() {
+  const el = document.getElementById('typo-content');
+  const cntEl = document.getElementById('patternCount');
+  if (state.pages.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔤</div><div class="empty-title">PDF를 업로드하면 검사가 시작됩니다</div></div>`;
+    if (cntEl) cntEl.textContent = '-'; return;
+  }
+  if (cntEl) cntEl.textContent = state.typoIssues.length + '건';
+  if (state.typoIssues.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">등록된 오타 패턴 미검출</div><div class="empty-sub">용어 사전 메뉴에서 오타 패턴을 추가하면 더 많은 오타를 잡을 수 있습니다</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="issue-list">${state.typoIssues.map(i => `
+    <div class="issue-item sev-${i.sev}">
+      <div class="issue-icon">🔤</div>
+      <div class="issue-content">
+        <div class="issue-title"><span class="highlight">${i.wrong}</span> → <span class="correct">${i.correct}</span></div>
+        <div class="issue-desc">"...${i.context}..."</div>
+        <div class="issue-meta"><span class="issue-page">p.${i.pageNum}</span><span class="issue-tag tag-typo">패턴 오타</span></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+function _oldRenderTypoContent_unused(tab) {
+  const el = document.getElementById('typo-content');
+  const filtered = state.typoIssues.filter(x => x.type === tab);
+  if (state.pages.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔤</div><div class="empty-title">PDF를 업로드하면 오타 검사가 시작됩니다</div></div>`;
+    return;
+  }
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">발견된 오타가 없습니다</div><div class="empty-sub">용어 사전을 더 추가하면 검사 정확도가 높아집니다</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="issue-list">${filtered.map(i => `
+    <div class="issue-item sev-${i.sev}">
+      <div class="issue-icon">🔤</div>
+      <div class="issue-content">
+        <div class="issue-title"><span class="highlight">${i.wrong}</span> → <span class="correct">${i.correct}</span></div>
+        <div class="issue-desc">"...${i.context}..."</div>
+        <div class="issue-meta"><span class="issue-page">p.${i.pageNum}</span><span class="issue-tag tag-typo">오타</span></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderNumberContent() {
+  const el = document.getElementById('number-content');
+  if (state.pages.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">PDF를 업로드하면 수치 분석이 시작됩니다</div></div>`;
+    return;
+  }
+  if (state.numberIssues.length === 0) {
+    let msg = state.comparePages.length === 0
+      ? '전년도 보고서를 위에서 업로드하면 수치 비교 분석이 가능합니다.'
+      : '30% 이상 변동된 수치가 없습니다.';
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">${msg}</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden;">
+    <table class="compare-table">
+      <thead><tr><th>항목</th><th>전년도</th><th>당해연도</th><th>변동률</th><th>페이지</th></tr></thead>
+      <tbody>${state.numberIssues.map(n => `<tr>
+        <td>${n.label}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${n.prev.toLocaleString()}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${n.curr.toLocaleString()}</td>
+        <td class="${n.dir === 'up' ? 'change-up' : 'change-down'}">${n.dir === 'up' ? '▲' : '▼'} ${n.change}%</td>
+        <td><span class="issue-page">p.${n.pageNum}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderUnitContent() {
+  const el = document.getElementById('unit-content');
+  if (state.pages.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">PDF를 업로드하면 단위 오류 검사가 시작됩니다</div></div>`;
+    return;
+  }
+  if (state.unitIssues.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">단위 오류가 발견되지 않았습니다</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="issue-list">${state.unitIssues.map(u => `
+    <div class="issue-item sev-${u.sev}">
+      <div class="issue-icon">⚠️</div>
+      <div class="issue-content">
+        <div class="issue-title"><span class="highlight">${u.match}</span></div>
+        <div class="issue-desc">${u.msg}<br><small style="color:var(--text3)">"...${u.context}..."</small></div>
+        <div class="issue-meta"><span class="issue-page">p.${u.pageNum}</span><span class="issue-tag tag-unit">단위</span></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderImageContent() {
+  const el = document.getElementById('image-content');
+  const actions = document.getElementById('image-api-actions');
+  if (state.imagePages.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">이미지 전용 페이지가 없습니다</div><div class="empty-sub">모든 페이지에서 텍스트 추출에 성공했습니다</div></div>`;
+    actions.style.display = 'none';
+    return;
+  }
+  actions.style.display = 'block';
+  document.getElementById('imagePageCount').textContent = `이미지 페이지 ${state.imagePages.length}개 발견 · API ${state.imagePages.length}회 필요`;
+  const analyzed = state.imageResults.map(r => r.pageNum);
+  el.innerHTML = `
+    <div class="image-page-grid" style="margin-bottom:16px;">${state.imagePages.map(p => `
+      <div class="image-page-chip ${analyzed.includes(p.pageNum) ? 'analyzed' : 'pending'}">
+        ${analyzed.includes(p.pageNum) ? '✅' : '🖼️'} p.${p.pageNum}
+      </div>`).join('')}
+    </div>
+    ${state.imageResults.length > 0 ? `<div class="issue-list">${state.imageResults.map(r => `
+      <div class="issue-item sev-${r.issues.length > 0 ? 'mid' : 'low'}">
+        <div class="issue-icon">🖼️</div>
+        <div class="issue-content">
+          <div class="issue-title">p.${r.pageNum} 이미지 분석 결과</div>
+          <div class="issue-desc" style="white-space:pre-wrap">${r.result}</div>
+          <div class="issue-meta"><span class="issue-page">p.${r.pageNum}</span><span class="issue-tag tag-image">Gemini Vision</span></div>
+        </div>
+      </div>`).join('')}</div>` : ''}`;
+}
+
+// ── Dictionary ───────────────────────────────────────────
+function renderDictPage() {
+  const el = document.getElementById('dictTags');
+  el.innerHTML = dict.map((w, i) => `
+    <div class="dict-tag">${w} <span class="remove" onclick="removeDictWord(${i})">×</span></div>
+  `).join('');
+  renderTypoPatternList();
+}
+function addDictWord() {
+  const v = document.getElementById('dictInput').value.trim();
+  if (!v) return;
+  if (!dict.includes(v)) { dict.push(v); saveDictStore(); renderDictPage(); }
+  document.getElementById('dictInput').value = '';
+}
+function removeDictWord(i) {
+  dict.splice(i, 1);
+  saveDictStore();
+  renderDictPage();
+}
+function resetDict() {
+  dict = ['코웨이','지속가능경영','온실가스','탄소중립','넷제로','재생에너지','전기차','태양광','GHG','ESG','CDP'];
+  saveDictStore();
+  renderDictPage();
+  showToast('✅','사전이 초기화되었습니다');
+}
+function saveDictStore() { localStorage.setItem('esgDict', JSON.stringify(dict)); }
+
+function renderTypoPatternList() {
+  const el = document.getElementById('typoPatternList');
+  if (!el) return;
+  el.innerHTML = typoPatterns.map((p, i) => `
+    <div class="issue-item sev-high" style="padding:8px 12px;">
+      <div class="issue-content" style="display:flex; align-items:center; gap:10px; flex-direction:row;">
+        <span class="highlight">${p.wrong}</span>
+        <span style="color:var(--text3)">→</span>
+        <span class="correct">${p.correct}</span>
+        <button class="btn btn-danger" onclick="removeTypoPattern(${i})" style="margin-left:auto; padding:3px 8px; font-size:11px;">삭제</button>
+      </div>
+    </div>`).join('');
+}
+function addTypoPattern() {
+  const w = document.getElementById('typoWrongInput').value.trim();
+  const c = document.getElementById('typoCorrectInput').value.trim();
+  if (!w || !c) return;
+  typoPatterns.push({ wrong: w, correct: c });
+  localStorage.setItem('typoPatterns', JSON.stringify(typoPatterns));
+  document.getElementById('typoWrongInput').value = '';
+  document.getElementById('typoCorrectInput').value = '';
+  renderTypoPatternList();
+  showToast('✅', '오타 패턴이 추가되었습니다');
+}
+function removeTypoPattern(i) {
+  typoPatterns.splice(i, 1);
+  localStorage.setItem('typoPatterns', JSON.stringify(typoPatterns));
+  renderTypoPatternList();
+}
+
+// ── API ──────────────────────────────────────────────────
+function saveApiKey() {
+  const key = document.getElementById('geminiApiKey').value.trim();
+  if (!key) return;
+  state.geminiKey = key;
+  localStorage.setItem('geminiKey', key);
+  document.getElementById('apiStatusBadge').textContent = '설정됨';
+  document.getElementById('apiStatusBadge').className = 'badge badge-green';
+  showToast('✅', 'API 키가 저장되었습니다');
+}
+async function testApiKey() {
+  const key = document.getElementById('geminiApiKey').value.trim() || state.geminiKey;
+  if (!key) { showToast('⚠️', 'API 키를 먼저 입력하세요'); return; }
+  const res = document.getElementById('apiTestResult');
+  res.textContent = '테스트 중...';
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    if (r.ok) {
+      res.textContent = '✅ API 키가 유효합니다';
+      res.style.color = 'var(--green)';
+    } else {
+      res.textContent = '❌ 유효하지 않은 API 키입니다';
+      res.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    res.textContent = '❌ 연결 실패: ' + e.message;
+    res.style.color = 'var(--red)';
+  }
+}
+
+async function analyzeImagePages() {
+  if (!state.geminiKey) {
+    showToast('⚠️', 'API 키를 먼저 설정하세요 (API 설정 메뉴)');
+    showPage('api');
+    return;
+  }
+  const btn = document.getElementById('btnAnalyzeImages');
+  const status = document.getElementById('imageAnalyzeStatus');
+  btn.disabled = true;
+  state.imageResults = [];
+
+  // Re-load PDF to get page canvases
+  const fileInput = document.querySelector('#page-upload input[type=file]');
+  if (!fileInput.files[0]) { showToast('⚠️', 'PDF 파일을 다시 업로드해주세요'); btn.disabled = false; return; }
+  const ab = await fileInput.files[0].arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+
+  for (let idx = 0; idx < state.imagePages.length; idx++) {
+    const pg = state.imagePages[idx];
+    status.textContent = `분석 중... ${idx+1}/${state.imagePages.length}`;
+    try {
+      const page = await pdf.getPage(pg.pageNum);
+      const vp = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement('canvas');
+      canvas.width = vp.width; canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: '당신은 한국어 ESG 보고서 전문 교정자입니다. 이 이미지에서 다음을 검사하고 발견된 문제만 한국어로 답하세요:\n1. 한국어 오타 또는 맞춤법 오류\n2. 단위 오류 (tCO₂e, 톤, % 혼용 등)\n3. 숫자 표기 오류\n문제가 없으면 "이상 없음"이라고만 답하세요.' },
+              { inline_data: { mime_type: 'image/jpeg', data: b64 } }
+            ]
+          }]
+        })
+      });
+      const data = await resp.json();
+      const result = data.candidates?.[0]?.content?.parts?.[0]?.text || '분석 결과 없음';
+      state.imageResults.push({ pageNum: pg.pageNum, result, issues: result !== '이상 없음' ? [result] : [] });
+    } catch(e) {
+      state.imageResults.push({ pageNum: pg.pageNum, result: '분석 실패: ' + e.message, issues: [] });
+    }
+    renderImageContent();
+  }
+  btn.disabled = false;
+  status.textContent = `완료 (${state.imagePages.length}페이지 분석)`;
+  showToast('✅', 'Gemini Vision 분석 완료');
+}
+
+// ── Utilities ────────────────────────────────────────────
+function setProgress(pct, label) {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = label;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+function getContext(text, idx, len) {
+  const start = Math.max(0, idx - len/2);
+  const end = Math.min(text.length, idx + len/2);
+  return text.slice(start, end).replace(/\s+/g, ' ').trim();
+}
+function getWordContext(text, word, len) {
+  const idx = text.indexOf(word);
+  if (idx < 0) return '';
+  return getContext(text, idx, len);
+}
+function escapeReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, (_,i) => Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0));
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+function showToast(icon, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Init ─────────────────────────────────────────────────
+window.onload = () => {
+  renderDictPage();
+  if (state.geminiKey) {
+    document.getElementById('geminiApiKey').value = state.geminiKey;
+    document.getElementById('apiStatusBadge').textContent = '설정됨';
+    document.getElementById('apiStatusBadge').className = 'badge badge-green';
+  }
+};
+</script>
+</body>
+</html>
