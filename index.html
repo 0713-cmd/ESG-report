@@ -531,7 +531,7 @@ async function runAIDirect(key, fullText) {
 
 텍스트:\n` + fullText.slice(0, 30000); // 직접 호출 시 일부만 (토큰 절약)
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${key}`, {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
