@@ -911,8 +911,7 @@ async function runPusanSpellCheck() {
   btn.disabled = true;
   state.pusanIssues = [];
 
-  const allText = state.pages.filter(p => !p.isImage).map(p => p.text).join('
-');
+  const allText = state.pages.filter(p => !p.isImage).map(p => p.text).join('\n');
 
   // 500자 단위 청크 분할
   const chunkSize = 500;
