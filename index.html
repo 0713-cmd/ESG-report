@@ -6,1426 +6,751 @@
 <title>Coway ESG 보고서 검증 시스템</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
-  :root {
-    --bg: #0a0e1a;
-    --bg2: #111827;
-    --bg3: #1a2235;
-    --border: #1e293b;
-    --border2: #2d3748;
-    --accent: #3b82f6;
-    --accent2: #6366f1;
-    --green: #10b981;
-    --yellow: #f59e0b;
-    --red: #ef4444;
-    --orange: #f97316;
-    --text: #e2e8f0;
-    --text2: #94a3b8;
-    --text3: #64748b;
-    --coway: #00a0e9;
-  }
+:root {
+  --bg: #0a0e1a; --bg2: #111827; --bg3: #1a2235;
+  --border: #1e293b; --border2: #2d3748;
+  --accent: #3b82f6; --green: #10b981;
+  --yellow: #f59e0b; --red: #ef4444; --orange: #f97316;
+  --text: #e2e8f0; --text2: #94a3b8; --text3: #64748b;
+  --coway: #00a0e9;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Pretendard',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* Header */
+.header { background:var(--bg2); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.logo-badge { background:linear-gradient(135deg,var(--coway),#6366f1); color:#fff; font-size:11px; font-weight:700; letter-spacing:1px; padding:4px 10px; border-radius:4px; }
+.badge { font-size:11px; padding:3px 9px; border-radius:12px; font-weight:500; }
+.badge-blue { background:rgba(59,130,246,.15); color:var(--accent); border:1px solid rgba(59,130,246,.3); }
+.badge-green { background:rgba(16,185,129,.15); color:var(--green); border:1px solid rgba(16,185,129,.3); }
 
-  body {
-    font-family: 'Pretendard', -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+/* Layout */
+.layout { display:flex; flex:1; overflow:hidden; height:calc(100vh - 56px); }
+.sidebar { width:220px; min-width:220px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; padding:12px 8px; }
+.sidebar-label { font-size:10px; font-weight:600; letter-spacing:1.2px; color:var(--text3); text-transform:uppercase; padding:8px 10px 4px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:13px; color:var(--text2); margin-bottom:2px; transition:all .15s; }
+.nav-item:hover { background:var(--bg3); color:var(--text); }
+.nav-item.active { background:rgba(59,130,246,.12); color:var(--accent); }
+.nav-count { margin-left:auto; font-size:11px; font-family:'JetBrains Mono',monospace; background:var(--bg3); padding:1px 6px; border-radius:10px; color:var(--text3); }
+.nav-count.red { background:rgba(239,68,68,.15); color:var(--red); }
+.nav-count.yellow { background:rgba(245,158,11,.15); color:var(--yellow); }
 
-  /* Header */
-  .header {
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo-badge {
-    background: linear-gradient(135deg, var(--coway), var(--accent2));
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 4px 10px;
-    border-radius: 4px;
-  }
-  .header-title { font-size: 15px; font-weight: 600; color: var(--text); }
-  .header-sub { font-size: 12px; color: var(--text3); }
-  .header-right { display: flex; align-items: center; gap: 8px; }
-  .badge {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-weight: 500;
-  }
-  .badge-blue { background: rgba(59,130,246,.15); color: var(--accent); border: 1px solid rgba(59,130,246,.3); }
-  .badge-green { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+/* Main */
+.main { flex:1; overflow-y:auto; padding:24px; }
+.page { display:none; }
+.page.active { display:block; }
 
-  /* Layout */
-  .layout { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 56px); }
+/* Upload */
+.upload-zone { border:2px dashed var(--border2); border-radius:12px; padding:48px; text-align:center; background:var(--bg2); transition:all .2s; cursor:pointer; }
+.upload-zone:hover { border-color:var(--accent); background:rgba(59,130,246,.04); }
+.upload-zone.drag { border-color:var(--accent); background:rgba(59,130,246,.08); }
 
-  /* Sidebar */
-  .sidebar {
-    width: 240px;
-    min-width: 240px;
-    background: var(--bg2);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-  }
-  .sidebar-section { padding: 16px 12px 8px; }
-  .sidebar-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1.2px;
-    color: var(--text3);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    padding: 0 8px;
-  }
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--text2);
-    transition: all .15s;
-    margin-bottom: 2px;
-  }
-  .nav-item:hover { background: var(--bg3); color: var(--text); }
-  .nav-item.active { background: rgba(59,130,246,.12); color: var(--accent); }
-  .nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
-  .nav-count {
-    margin-left: auto;
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    background: var(--bg3);
-    padding: 1px 6px;
-    border-radius: 10px;
-    color: var(--text3);
-  }
-  .nav-count.has-error { background: rgba(239,68,68,.15); color: var(--red); }
-  .nav-count.has-warn { background: rgba(245,158,11,.15); color: var(--yellow); }
+/* Progress */
+.progress-wrap { background:var(--bg3); border-radius:4px; height:6px; overflow:hidden; margin:6px 0; }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--accent),#6366f1); border-radius:4px; transition:width .3s; }
 
-  /* Main */
-  .main { flex: 1; overflow-y: auto; padding: 24px; }
+/* Stats */
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.stat { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; }
+.stat-label { font-size:11px; color:var(--text3); margin-bottom:8px; }
+.stat-value { font-size:28px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; }
+.stat-value.blue { color:var(--accent); }
+.stat-value.red { color:var(--red); }
+.stat-value.yellow { color:var(--yellow); }
+.stat-value.green { color:var(--green); }
+.stat-sub { font-size:11px; color:var(--text3); margin-top:4px; }
 
-  /* Upload Area */
-  .upload-area {
-    border: 2px dashed var(--border2);
-    border-radius: 12px;
-    padding: 48px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all .2s;
-    background: var(--bg2);
-    position: relative;
-  }
-  .upload-area:hover, .upload-area.drag-over {
-    border-color: var(--accent);
-    background: rgba(59,130,246,.04);
-  }
-  .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .upload-icon { font-size: 40px; margin-bottom: 12px; }
-  .upload-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-  .upload-sub { font-size: 13px; color: var(--text3); }
+/* Issues */
+.issue-list { display:flex; flex-direction:column; gap:6px; }
+.issue { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; display:flex; gap:12px; transition:border-color .15s; }
+.issue:hover { border-color:var(--border2); }
+.issue.high { border-left:3px solid var(--red); }
+.issue.mid { border-left:3px solid var(--yellow); }
+.issue.low { border-left:3px solid var(--green); }
+.issue-body { flex:1; min-width:0; }
+.issue-title { font-size:13px; font-weight:600; margin-bottom:4px; }
+.issue-desc { font-size:12px; color:var(--text2); line-height:1.6; }
+.issue-meta { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; align-items:center; }
+.page-badge { font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text3); background:var(--bg3); padding:1px 6px; border-radius:4px; }
+.type-badge { font-size:11px; padding:1px 7px; border-radius:10px; font-weight:500; }
+.tb-red { background:rgba(239,68,68,.12); color:var(--red); }
+.tb-yellow { background:rgba(245,158,11,.12); color:var(--yellow); }
+.tb-blue { background:rgba(59,130,246,.12); color:var(--accent); }
+.wrong { background:rgba(239,68,68,.2); color:var(--red); font-family:'JetBrains Mono',monospace; font-size:12px; padding:1px 5px; border-radius:3px; }
+.correct { background:rgba(16,185,129,.15); color:var(--green); font-family:'JetBrains Mono',monospace; font-size:12px; padding:1px 5px; border-radius:3px; }
 
-  /* Progress */
-  .progress-bar-wrap {
-    background: var(--bg3);
-    border-radius: 4px;
-    height: 6px;
-    margin: 8px 0;
-    overflow: hidden;
-  }
-  .progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 4px;
-    transition: width .3s;
-  }
+/* Panel */
+.panel { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
+.panel-title { font-size:13px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 
-  /* Stats Row */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .stat-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-  }
-  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; font-weight: 500; }
-  .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
-  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
-  .stat-red .stat-value { color: var(--red); }
-  .stat-yellow .stat-value { color: var(--yellow); }
-  .stat-green .stat-value { color: var(--green); }
-  .stat-blue .stat-value { color: var(--accent); }
+/* Input */
+.input { background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:8px 12px; color:var(--text); font-size:13px; outline:none; transition:border-color .15s; width:100%; font-family:'Pretendard',sans-serif; }
+.input:focus { border-color:var(--accent); }
+.input::placeholder { color:var(--text3); }
+.row { display:flex; gap:8px; }
 
-  /* Section */
-  .section { margin-bottom: 20px; }
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text2);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+/* Button */
+.btn { padding:8px 16px; border-radius:6px; border:none; font-size:13px; font-weight:600; cursor:pointer; font-family:'Pretendard',sans-serif; transition:all .15s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:#2563eb; }
+.btn-secondary { background:var(--bg3); color:var(--text2); border:1px solid var(--border2); }
+.btn-secondary:hover { color:var(--text); }
+.btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  /* Issue List */
-  .issue-list { display: flex; flex-direction: column; gap: 6px; }
-  .issue-item {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    transition: border-color .15s;
-  }
-  .issue-item:hover { border-color: var(--border2); }
-  .issue-item.sev-high { border-left: 3px solid var(--red); }
-  .issue-item.sev-mid { border-left: 3px solid var(--yellow); }
-  .issue-item.sev-low { border-left: 3px solid var(--green); }
-  .issue-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
-  .issue-content { flex: 1; min-width: 0; }
-  .issue-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
-  .issue-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
-  .issue-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 6px;
-    flex-wrap: wrap;
-  }
-  .issue-page {
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text3);
-    background: var(--bg3);
-    padding: 1px 6px;
-    border-radius: 4px;
-  }
-  .issue-tag {
-    font-size: 11px;
-    padding: 1px 7px;
-    border-radius: 10px;
-    font-weight: 500;
-  }
-  .tag-typo { background: rgba(239,68,68,.12); color: var(--red); }
-  .tag-number { background: rgba(245,158,11,.12); color: var(--yellow); }
-  .tag-unit { background: rgba(249,115,22,.12); color: var(--orange); }
-  .tag-context { background: rgba(99,102,241,.12); color: var(--accent2); }
-  .tag-image { background: rgba(59,130,246,.12); color: var(--accent); }
-  .highlight {
-    background: rgba(239,68,68,.2);
-    color: var(--red);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    padding: 1px 5px;
-    border-radius: 3px;
-  }
-  .correct {
-    background: rgba(16,185,129,.15);
-    color: var(--green);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    padding: 1px 5px;
-    border-radius: 3px;
-  }
+/* Empty */
+.empty { text-align:center; padding:48px 24px; color:var(--text3); }
+.empty-icon { font-size:36px; margin-bottom:12px; }
+.empty-title { font-size:15px; font-weight:600; color:var(--text2); margin-bottom:6px; }
+.empty-sub { font-size:13px; line-height:1.6; }
 
-  /* API 설정 패널 */
-  .api-panel {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 20px;
-  }
-  .api-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .api-panel-title { font-size: 13px; font-weight: 600; }
-  .api-row { display: flex; gap: 8px; align-items: center; }
-  .api-input {
-    flex: 1;
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: 6px;
-    padding: 8px 12px;
-    color: var(--text);
-    font-size: 13px;
-    font-family: 'JetBrains Mono', monospace;
-    outline: none;
-    transition: border-color .15s;
-  }
-  .api-input:focus { border-color: var(--accent); }
-  .api-input::placeholder { color: var(--text3); }
-  .btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .15s;
-    font-family: 'Pretendard', sans-serif;
-  }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: #2563eb; }
-  .btn-secondary {
-    background: var(--bg3);
-    color: var(--text2);
-    border: 1px solid var(--border2);
-  }
-  .btn-secondary:hover { color: var(--text); border-color: var(--accent); }
-  .btn-danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
-  .btn-danger:hover { background: rgba(239,68,68,.25); }
-  .btn:disabled { opacity: .4; cursor: not-allowed; }
+/* Info box */
+.info { background:rgba(59,130,246,.06); border:1px solid rgba(59,130,246,.2); border-radius:8px; padding:12px 14px; font-size:12px; color:var(--text2); line-height:1.7; margin-bottom:12px; }
+.warn { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.2); border-radius:8px; padding:12px 14px; font-size:12px; color:var(--text2); line-height:1.7; margin-bottom:12px; }
 
-  /* Dictionary Panel */
-  .dict-panel {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 20px;
-  }
-  .dict-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-  .dict-tag {
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .dict-tag .remove {
-    color: var(--text3);
-    cursor: pointer;
-    font-size: 13px;
-    line-height: 1;
-  }
-  .dict-tag .remove:hover { color: var(--red); }
-  .dict-add-row { display: flex; gap: 8px; }
+/* Dict tags */
+.tags { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.tag { background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:3px 10px; font-size:12px; display:flex; align-items:center; gap:6px; }
+.tag-x { color:var(--text3); cursor:pointer; font-size:14px; line-height:1; }
+.tag-x:hover { color:var(--red); }
 
-  /* Number Compare */
-  .compare-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  .compare-table th {
-    text-align: left;
-    padding: 8px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg3);
-  }
-  .compare-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-  }
-  .compare-table tr:last-child td { border-bottom: none; }
-  .compare-table tr:hover td { background: rgba(255,255,255,.02); }
-  .change-up { color: var(--red); font-weight: 600; }
-  .change-down { color: var(--green); font-weight: 600; }
-  .change-ok { color: var(--text3); }
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 
-  /* Empty State */
-  .empty-state {
-    text-align: center;
-    padding: 48px 24px;
-    color: var(--text3);
-  }
-  .empty-icon { font-size: 36px; margin-bottom: 12px; }
-  .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text2); }
-  .empty-sub { font-size: 13px; line-height: 1.6; }
+/* Toast */
+.toast { position:fixed; bottom:20px; right:20px; background:var(--bg2); border:1px solid var(--border2); border-radius:8px; padding:12px 16px; font-size:13px; z-index:999; display:none; gap:8px; align-items:center; box-shadow:0 8px 24px rgba(0,0,0,.4); max-width:340px; }
+.toast.show { display:flex; }
 
-  /* Tab */
-  .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
-  .tab {
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text3);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: all .15s;
-  }
-  .tab:hover { color: var(--text2); }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 13px;
-    z-index: 999;
-    display: none;
-    gap: 8px;
-    align-items: center;
-    box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    max-width: 320px;
-  }
-  .toast.show { display: flex; }
-
-  .loading-spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--border2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .page-panel { display: none; }
-  .page-panel.active { display: block; }
-
-  .image-page-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 8px;
-  }
-  .image-page-chip {
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: 6px;
-    padding: 8px;
-    text-align: center;
-    font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
-  }
-  .image-page-chip.analyzed { border-color: var(--green); color: var(--green); }
-  .image-page-chip.pending { color: var(--text3); }
-
-  .info-box {
-    background: rgba(59,130,246,.06);
-    border: 1px solid rgba(59,130,246,.2);
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-size: 12px;
-    color: var(--text2);
-    line-height: 1.6;
-    margin-bottom: 12px;
-  }
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner { width:14px; height:14px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">
-  <div class="header-left">
+  <div style="display:flex;align-items:center;gap:12px;">
     <div class="logo-badge">COWAY</div>
-    <div>
-      <div class="header-title">지속경영보고서 검증 시스템</div>
-    </div>
+    <div style="font-size:15px;font-weight:600;">지속경영보고서 검증 시스템</div>
   </div>
-  <div class="header-right">
+  <div style="display:flex;gap:8px;align-items:center;">
     <span class="badge badge-blue" id="statusBadge">대기 중</span>
-    <span class="badge badge-green" id="pdfNameBadge" style="display:none"></span>
+    <span class="badge badge-green" id="fileBadge" style="display:none;"></span>
   </div>
 </div>
 
 <div class="layout">
-  <!-- Sidebar -->
   <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">분석 메뉴</div>
-      <div class="nav-item active" onclick="showPage('upload')" id="nav-upload">
-        <span class="icon">📄</span> PDF 업로드
-      </div>
-      <div class="nav-item" onclick="showPage('typo')" id="nav-typo">
-        <span class="icon">🔤</span> 오타 검사
-        <span class="nav-count" id="cnt-typo">-</span>
-      </div>
-      <div class="nav-item" onclick="showPage('number')" id="nav-number">
-        <span class="icon">📊</span> 수치 이상값
-        <span class="nav-count" id="cnt-number">-</span>
-      </div>
-      <div class="nav-item" onclick="showPage('unit')" id="nav-unit">
-        <span class="icon">⚠️</span> 단위 오류
-        <span class="nav-count" id="cnt-unit">-</span>
-      </div>
-      <div class="nav-item" onclick="showPage('image')" id="nav-image">
-        <span class="icon">🖼️</span> 이미지 페이지
-        <span class="nav-count" id="cnt-image">-</span>
-      </div>
+    <div class="sidebar-label">분석</div>
+    <div class="nav-item active" onclick="nav('upload')" id="nav-upload">📄 PDF 업로드</div>
+    <div class="nav-item" onclick="nav('ai')" id="nav-ai">
+      🤖 AI 오타 검사
+      <span class="nav-count" id="cnt-ai">-</span>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-label">설정</div>
-      <div class="nav-item" onclick="showPage('dict')" id="nav-dict">
-        <span class="icon">📚</span> 용어 사전
-      </div>
-      <div class="nav-item" onclick="showPage('api')" id="nav-api">
-        <span class="icon">🔑</span> API 설정
-      </div>
+    <div class="nav-item" onclick="nav('pattern')" id="nav-pattern">
+      🎯 패턴 오타
+      <span class="nav-count" id="cnt-pattern">-</span>
     </div>
-    <div class="sidebar-section" style="margin-top:auto; padding-top: 16px; border-top: 1px solid var(--border);">
-      <div style="font-size:11px; color:var(--text3); padding:0 8px; line-height:1.6;">
-        Layer 1: PDF.js (API 0회)<br>
-        Layer 2: 룰 기반 검사<br>
-        Layer 3: Gemini Vision (선택)
-      </div>
+    <div class="nav-item" onclick="nav('number')" id="nav-number">
+      📊 수치 이상값
+      <span class="nav-count" id="cnt-number">-</span>
     </div>
+    <div class="nav-item" onclick="nav('image')" id="nav-image">
+      🖼️ 이미지 페이지
+      <span class="nav-count" id="cnt-image">-</span>
+    </div>
+    <div class="sidebar-label" style="margin-top:8px;">설정</div>
+    <div class="nav-item" onclick="nav('dict')" id="nav-dict">📚 오타 패턴 사전</div>
+    <div class="nav-item" onclick="nav('setting')" id="nav-setting">⚙️ 설정</div>
   </div>
 
-  <!-- Main -->
   <div class="main">
 
-    <!-- Upload Page -->
-    <div class="page-panel active" id="page-upload">
-      <div class="stats-row" id="statsRow" style="display:none">
-        <div class="stat-card stat-blue">
-          <div class="stat-label">총 페이지</div>
-          <div class="stat-value" id="stat-pages">0</div>
-          <div class="stat-sub">페이지</div>
-        </div>
-        <div class="stat-card stat-red">
-          <div class="stat-label">오타 의심</div>
-          <div class="stat-value" id="stat-typo">0</div>
-          <div class="stat-sub">건</div>
-        </div>
-        <div class="stat-card stat-yellow">
-          <div class="stat-label">수치 이상</div>
-          <div class="stat-value" id="stat-number">0</div>
-          <div class="stat-sub">건</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">이미지 페이지</div>
-          <div class="stat-value" id="stat-image">0</div>
-          <div class="stat-sub">페이지 (API 필요)</div>
-        </div>
+    <!-- PDF 업로드 -->
+    <div class="page active" id="page-upload">
+      <div class="stats" id="statsRow" style="display:none;">
+        <div class="stat"><div class="stat-label">총 페이지</div><div class="stat-value blue" id="st-pages">0</div><div class="stat-sub">페이지</div></div>
+        <div class="stat"><div class="stat-label">AI 오타 검출</div><div class="stat-value red" id="st-ai">-</div><div class="stat-sub">건</div></div>
+        <div class="stat"><div class="stat-label">패턴 오타</div><div class="stat-value yellow" id="st-pattern">-</div><div class="stat-sub">건</div></div>
+        <div class="stat"><div class="stat-label">이미지 페이지</div><div class="stat-value" id="st-image">-</div><div class="stat-sub">페이지</div></div>
       </div>
 
-      <div class="upload-area" id="uploadArea" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="this.classList.remove('drag-over')">
-        <input type="file" accept=".pdf" onchange="handleFile(event)">
-        <div class="upload-icon">📑</div>
-        <div class="upload-title">보고서 PDF를 업로드하세요</div>
-        <div class="upload-sub">클릭하거나 파일을 드래그&드롭 · 최대 200MB</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" accept=".pdf" id="fileInput" style="display:none;" onchange="onFileSelect(event)">
+        <div style="font-size:40px;margin-bottom:12px;">📑</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px;">보고서 PDF를 업로드하세요</div>
+        <div style="font-size:13px;color:var(--text3);">클릭하거나 드래그&드롭</div>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="document.getElementById('fileInput').click()">파일 선택</button>
       </div>
 
-      <div id="progressArea" style="display:none; margin-top:16px;">
-        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text3); margin-bottom:6px;">
-          <span id="progressLabel">텍스트 추출 중...</span>
+      <div id="progressArea" style="display:none;margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:4px;">
+          <span id="progressLabel">처리 중...</span>
           <span id="progressPct">0%</span>
         </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar" id="progressBar" style="width:0%"></div>
-        </div>
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
       </div>
 
-      <div id="summaryArea" style="display:none; margin-top:20px;">
-        <div class="section-title" style="margin-bottom:12px;">🔍 분석 결과 요약</div>
+      <div id="summaryArea" style="display:none;margin-top:20px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px;">📋 분석 결과 요약</div>
         <div class="issue-list" id="summaryList"></div>
       </div>
     </div>
 
-    <!-- Typo Page -->
-    <div class="page-panel" id="page-typo">
-      <!-- 섹션 1: 패턴 오타 (등록된 패턴만) -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-title">🎯 패턴 오타 검사 <span style="font-size:11px; color:var(--text3); font-weight:400; margin-left:6px;">등록된 오타 패턴만 · 오탐 없음</span></div>
-          <span class="badge badge-blue" id="patternCount">-</span>
-        </div>
-        <div id="typo-content">
-          <div class="empty-state">
-            <div class="empty-icon">🔤</div>
-            <div class="empty-title">PDF를 업로드하면 검사가 시작됩니다</div>
-            <div class="empty-sub">용어 사전 메뉴에서 오타 패턴을 등록하면<br>전기자→전기차 같은 오타를 정확하게 잡아냅니다</div>
-          </div>
-        </div>
+    <!-- AI 오타 검사 -->
+    <div class="page" id="page-ai">
+      <div class="info">
+        🤖 <strong>Gemini 1.5 Pro</strong>가 전체 보고서를 읽고 한국어·영어 오타를 찾아냅니다.<br>
+        PDF 업로드 후 아래 버튼을 누르세요. 설정 메뉴에서 API 키를 먼저 등록해야 합니다.
       </div>
-
-      <div style="border-top:1px solid var(--border); margin: 20px 0;"></div>
-
-      <!-- 섹션 2: 부산대 맞춤법 검사기 -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-title">🏛️ 부산대 한국어 맞춤법 검사기 <span style="font-size:11px; color:var(--text3); font-weight:400; margin-left:6px;">환경켱영→환경경영 등 진짜 맞춤법 오류</span></div>
-        </div>
-        <div class="info-box">
-          부산대 맞춤법 검사기는 실제 한국어 맞춤법 엔진으로 진짜 오타만 잡아냅니다. PDF 텍스트를 500자 단위로 분할해 순차 검사합니다.
-        </div>
-        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-          <button class="btn btn-primary" onclick="runPusanSpellCheck()" id="btnPusan">맞춤법 검사 실행</button>
-          <span id="pusanStatus" style="font-size:12px; color:var(--text3);"></span>
-        </div>
-        <div id="pusanResult">
-          <div class="empty-state" style="padding:24px;">
-            <div class="empty-icon">🏛️</div>
-            <div class="empty-title">위 버튼을 눌러 맞춤법 검사를 시작하세요</div>
-          </div>
-        </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btnAI" onclick="runAICheck()">🤖 AI 오타 검사 시작</button>
+        <span id="aiStatus" style="font-size:12px;color:var(--text3);"></span>
+      </div>
+      <div id="aiResult">
+        <div class="empty"><div class="empty-icon">🤖</div><div class="empty-title">AI 오타 검사 대기 중</div><div class="empty-sub">PDF 업로드 후 위 버튼을 누르세요</div></div>
       </div>
     </div>
 
-    <!-- Number Page -->
-    <div class="page-panel" id="page-number">
-      <div class="info-box">
-        ⚡ <strong>수치 이상값 검사</strong>: PDF에서 추출된 숫자를 분석하여 전년도 대비 30% 이상 변동된 수치를 표시합니다.<br>
-        전년도 보고서를 비교 파일로 추가 업로드하면 더 정확한 비교가 가능합니다.
+    <!-- 패턴 오타 -->
+    <div class="page" id="page-pattern">
+      <div class="info">
+        🎯 <strong>등록된 오타 패턴</strong>만 검사합니다. 오탐 없음.<br>
+        아래 "오타 패턴 사전" 메뉴에서 직접 등록한 패턴만 잡아냅니다.
       </div>
+      <div id="patternResult">
+        <div class="empty"><div class="empty-icon">🎯</div><div class="empty-title">PDF를 업로드하면 자동 실행됩니다</div></div>
+      </div>
+    </div>
+
+    <!-- 수치 이상값 -->
+    <div class="page" id="page-number">
+      <div class="info">📊 전년도 보고서와 수치를 비교합니다. 30% 이상 변동 시 표시합니다.</div>
       <div style="margin-bottom:12px;">
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:6px;">전년도 보고서 (선택 · 비교용)</label>
-        <input type="file" accept=".pdf" onchange="handleCompareFile(event)" 
-          style="font-size:12px; color:var(--text2); background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:6px 10px; width:100%; outline:none;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:6px;">전년도 보고서 PDF (비교용 · 선택)</div>
+        <input type="file" accept=".pdf" id="compareInput" onchange="onCompareSelect(event)"
+          style="font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;width:100%;">
       </div>
-      <div id="number-content">
-        <div class="empty-state">
-          <div class="empty-icon">📊</div>
-          <div class="empty-title">PDF를 업로드하면 수치 분석이 시작됩니다</div>
-          <div class="empty-sub">30% 이상 변동 수치, 합계 불일치,<br>이상 패턴을 자동 감지합니다</div>
+      <div id="numberResult">
+        <div class="empty"><div class="empty-icon">📊</div><div class="empty-title">PDF를 업로드하면 자동 실행됩니다</div><div class="empty-sub">전년도 보고서도 업로드하면 비교 분석이 가능합니다</div></div>
+      </div>
+    </div>
+
+    <!-- 이미지 페이지 -->
+    <div class="page" id="page-image">
+      <div class="info">🖼️ 텍스트 추출이 불가능한 이미지 페이지 목록입니다. AI 검사 시 자동으로 포함됩니다.</div>
+      <div id="imageResult">
+        <div class="empty"><div class="empty-icon">🖼️</div><div class="empty-title">PDF를 업로드하면 분류됩니다</div></div>
+      </div>
+    </div>
+
+    <!-- 오타 패턴 사전 -->
+    <div class="page" id="page-dict">
+      <div class="panel">
+        <div class="panel-title">🎯 오타 패턴 등록</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">잘못된 표현 → 올바른 표현. 등록한 패턴만 패턴 오타 검사에서 검출합니다.</div>
+        <div class="issue-list" id="patternList"></div>
+        <div class="row" style="margin-top:10px;">
+          <input class="input" id="wrongInput" placeholder="잘못된 표현 (예: 전기차동차)" style="flex:1;">
+          <input class="input" id="correctInput" placeholder="올바른 표현 (예: 전기자동차)" style="flex:1;">
+          <button class="btn btn-primary" onclick="addPattern()">추가</button>
         </div>
       </div>
     </div>
 
-    <!-- Unit Page -->
-    <div class="page-panel" id="page-unit">
-      <div id="unit-content">
-        <div class="empty-state">
-          <div class="empty-icon">⚠️</div>
-          <div class="empty-title">단위 오류 검사</div>
-          <div class="empty-sub">tCO₂e / 톤 / % 혼용, 날짜 형식 오류,<br>숫자-단위 불일치를 감지합니다</div>
+    <!-- 설정 -->
+    <div class="page" id="page-setting">
+      <div class="panel">
+        <div class="panel-title">🔑 Gemini API 키</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.6;">
+          Vercel 환경변수 <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">GEMINI_API_KEY</code>에 설정하는 것이 안전합니다.<br>
+          여기에 입력하면 이 브라우저에만 임시 저장됩니다 (테스트용).
+        </div>
+        <div class="row">
+          <input class="input" id="apiKeyInput" type="password" placeholder="AIza...">
+          <button class="btn btn-primary" onclick="saveKey()">저장</button>
+          <button class="btn btn-secondary" onclick="testKey()">테스트</button>
+        </div>
+        <div id="keyTestResult" style="font-size:12px;margin-top:8px;color:var(--text3);"></div>
+        <div class="warn" style="margin-top:12px;">
+          ⚠️ API 키를 GitHub에 업로드하지 마세요.<br>
+          Vercel → Settings → Environment Variables → <strong>GEMINI_API_KEY</strong> 에 등록하는 것을 권장합니다.
         </div>
       </div>
-    </div>
-
-    <!-- Image Page -->
-    <div class="page-panel" id="page-image">
-      <div class="info-box">
-        🖼️ <strong>이미지 페이지</strong>: 텍스트 레이어가 없는 페이지입니다. 그래프, 인포그래픽 등이 이미지로 삽입된 경우 Gemini Vision API로 오타를 분석할 수 있습니다.
-      </div>
-      <div id="image-api-actions" style="margin-bottom:16px; display:none;">
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <span id="imagePageCount" style="font-size:13px; color:var(--text2);"></span>
-          <button class="btn btn-primary" onclick="analyzeImagePages()" id="btnAnalyzeImages">Gemini Vision으로 분석</button>
-          <span id="imageAnalyzeStatus" style="font-size:12px; color:var(--text3);"></span>
-        </div>
-      </div>
-      <div id="image-content">
-        <div class="empty-state">
-          <div class="empty-icon">🖼️</div>
-          <div class="empty-title">PDF를 업로드하면 이미지 페이지를 분류합니다</div>
-          <div class="empty-sub">이미지 전용 페이지는 Gemini Vision API로<br>오타 및 단위 오류를 검사할 수 있습니다</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Dictionary Page -->
-    <div class="page-panel" id="page-dict">
-      <div class="dict-panel">
-        <div class="api-panel-header">
-          <div class="api-panel-title">📚 회사 용어 사전</div>
-          <button class="btn btn-secondary" onclick="resetDict()" style="font-size:12px; padding:5px 10px;">기본값으로 초기화</button>
-        </div>
-        <div style="font-size:12px; color:var(--text3); margin-bottom:10px;">
-          등록된 올바른 용어입니다. 유사 오타가 발견되면 자동으로 알림을 표시합니다.
-        </div>
-        <div class="dict-tags" id="dictTags"></div>
-        <div class="dict-add-row">
-          <input class="api-input" id="dictInput" placeholder="추가할 용어 입력 (예: 넷제로)" onkeydown="if(event.key==='Enter') addDictWord()">
-          <button class="btn btn-primary" onclick="addDictWord()">추가</button>
-        </div>
-      </div>
-      <div class="dict-panel">
-        <div class="api-panel-header">
-          <div class="api-panel-title">🚫 오타 패턴 사전</div>
-        </div>
-        <div style="font-size:12px; color:var(--text3); margin-bottom:10px;">
-          자주 발생하는 오타 → 올바른 표현 매핑입니다.
-        </div>
-        <div id="typoPatternList" class="issue-list"></div>
-        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-          <input class="api-input" id="typoWrongInput" placeholder="잘못된 표현 (예: 전기자)" style="flex:1; min-width:120px;">
-          <input class="api-input" id="typoCorrectInput" placeholder="올바른 표현 (예: 전기차)" style="flex:1; min-width:120px;">
-          <button class="btn btn-primary" onclick="addTypoPattern()">추가</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- API Page -->
-    <div class="page-panel" id="page-api">
-      <div class="api-panel">
-        <div class="api-panel-header">
-          <div class="api-panel-title">🔑 Gemini Vision API 설정</div>
-          <span class="badge badge-blue" id="apiStatusBadge">미설정</span>
-        </div>
-        <div style="font-size:12px; color:var(--text3); margin-bottom:12px; line-height:1.6;">
-          이미지로 삽입된 그래프, 인포그래픽의 오타를 검사하는 데 사용됩니다.<br>
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);">Google AI Studio</a>에서 무료 API 키를 발급받을 수 있습니다. (일 1,500회 무료)
-        </div>
-        <div class="api-row">
-          <input class="api-input" id="geminiApiKey" type="password" placeholder="AIza...로 시작하는 Gemini API 키 입력">
-          <button class="btn btn-primary" onclick="saveApiKey()">저장</button>
-          <button class="btn btn-secondary" onclick="testApiKey()">테스트</button>
-        </div>
-        <div id="apiTestResult" style="font-size:12px; margin-top:8px; color:var(--text3);"></div>
-      </div>
-      <div class="api-panel">
-        <div class="api-panel-title" style="margin-bottom:10px;">⚙️ 분석 설정</div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
-            <input type="checkbox" id="chk30pct" checked style="accent-color:var(--accent);">
-            수치 30% 이상 변동 시 경고
+      <div class="panel">
+        <div class="panel-title">⚙️ 검사 설정</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="chkNumber" checked style="accent-color:var(--accent);">
+            수치 30% 이상 변동 경고
           </label>
-          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
-            <input type="checkbox" id="chkUnit" checked style="accent-color:var(--accent);">
-            단위 혼용 감지 (tCO₂e / 톤 / %)
-          </label>
-          <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
-            <input type="checkbox" id="chkDateFmt" checked style="accent-color:var(--accent);">
-            날짜 형식 불일치 감지
-          </label>
-          <div style="display:flex; align-items:center; gap:10px; font-size:13px;">
-            <span style="color:var(--text2);">수치 변동 임계값</span>
-            <input type="number" id="thresholdPct" value="30" min="1" max="100"
-              style="width:60px; background:var(--bg3); border:1px solid var(--border2); border-radius:4px; padding:4px 8px; color:var(--text); font-size:13px; outline:none;">
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+            <span>변동 임계값</span>
+            <input type="number" id="threshold" value="30" min="1" max="100"
+              style="width:60px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--text);font-size:13px;outline:none;">
             <span style="color:var(--text3);">%</span>
           </div>
         </div>
       </div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /layout -->
+  </div>
+</div>
 
-<!-- Toast -->
 <div class="toast" id="toast">
-  <span id="toastIcon">ℹ️</span>
+  <span id="toastIcon"></span>
   <span id="toastMsg"></span>
 </div>
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ── State ──────────────────────────────────────────────
-const state = {
-  pages: [],
-  typoIssues: [],
+// ── State ────────────────────────────────────────────────
+const S = {
+  pages: [],        // {pageNum, text, isImage}
+  pageMap: [],      // {pageNum, start, end} 전체 텍스트 내 위치
+  aiIssues: [],
+  patternIssues: [],
   numberIssues: [],
-  unitIssues: [],
-  imagePages: [],
-  imageResults: [],
   comparePages: [],
-  pusanIssues: [],
-  geminiKey: localStorage.getItem('geminiKey') || '',
+  apiKey: localStorage.getItem('geminiKey') || '',
 };
 
-// ── Default Dictionary ──────────────────────────────────
-let dict = JSON.parse(localStorage.getItem('esgDict')) || [
-  '코웨이','지속가능경영','온실가스','탄소중립','넷제로','재생에너지',
-  '전기차','태양광','수처리','공기청정기','정수기','비데','매트리스',
-  'Scope1','Scope2','Scope3','tCO₂e','CDP','ESG','KCGS','SBTi',
-  'RE100','REC','PPA','BAU','LCA','GHG','DJSI','GRI','SASB','TCFD',
-  '공급망','이해관계자','이사회','사회적가치','환경경영','안전보건',
-  '임직원','협력사','온실가스배출량','에너지소비량','재생에너지비율',
-];
-let typoPatterns = JSON.parse(localStorage.getItem('typoPatterns')) || [
-  {wrong:'전기자 전환', correct:'전기차 전환'},
-  {wrong:'온신가스', correct:'온실가스'},
-  {wrong:'탄소중닙', correct:'탄소중립'},
-  {wrong:'코웨히', correct:'코웨이'},
-  {wrong:'재생에네지', correct:'재생에너지'},
-  {wrong:'넷재로', correct:'넷제로'},
-  {wrong:'태양관', correct:'태양광'},
-];
-// 기본 패턴 주의: 정상 표현(접두어 포함 단어 등)은 절대 오타로 등록하지 마세요
-
-// ── Unit patterns ─────────────────────────────────────────
-// 날짜 형식(2024.01.01 등)은 ESG 보고서 정상 표기이므로 검사 제외
-const unitPatterns = [
-  { re: /tco2e|tco₂e|TCO2e/g, msg: 'tCO₂e 표기가 올바르지 않습니다 (권장: tCO₂e)', tag: 'tag-unit' },
+// ── Patterns ─────────────────────────────────────────────
+let patterns = JSON.parse(localStorage.getItem('typoPatterns') || 'null') || [
+  { wrong: '전기차동차', correct: '전기자동차' },
+  { wrong: '온신가스',   correct: '온실가스'   },
+  { wrong: '탄소중닙',   correct: '탄소중립'   },
+  { wrong: '재생에네지', correct: '재생에너지'  },
+  { wrong: '넷재로',    correct: '넷제로'     },
+  { wrong: '태양관',    correct: '태양광'     },
+  { wrong: '코웨히',    correct: '코웨이'     },
 ];
 
-// ── Navigation ──────────────────────────────────────────
-function showPage(name) {
-  document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+// ── Navigation ───────────────────────────────────────────
+function nav(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
 }
-function switchTab(page, tab) {
-  document.querySelectorAll(`[id^="tab-${page}-"]`).forEach(t => t.classList.remove('active'));
-  document.getElementById(`tab-${page}-${tab}`).classList.add('active');
-  renderTypoContent();
-}
 
-// ── Drag & Drop ─────────────────────────────────────────
-function handleDragOver(e) {
-  e.preventDefault();
-  document.getElementById('uploadArea').classList.add('drag-over');
-}
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('uploadArea').classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type === 'application/pdf') loadPdf(file);
-  else showToast('⚠️', 'PDF 파일만 업로드 가능합니다');
-}
-function handleFile(e) { if (e.target.files[0]) loadPdf(e.target.files[0]); }
-function handleCompareFile(e) { if (e.target.files[0]) loadComparePdf(e.target.files[0]); }
+// ── Upload ───────────────────────────────────────────────
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') loadPDF(f);
+  else toast('⚠️', 'PDF 파일만 가능합니다');
+});
+zone.addEventListener('click', () => document.getElementById('fileInput').click());
 
-// ── Load PDF ────────────────────────────────────────────
-async function loadPdf(file) {
-  showToast('⏳', 'PDF 로딩 중...');
+function onFileSelect(e) { if (e.target.files[0]) loadPDF(e.target.files[0]); }
+function onCompareSelect(e) { if (e.target.files[0]) loadComparePDF(e.target.files[0]); }
+
+async function loadPDF(file) {
+  toast('⏳', 'PDF 분석 중...');
+  setStatus('분석 중');
+  document.getElementById('fileBadge').textContent = file.name;
+  document.getElementById('fileBadge').style.display = 'inline-flex';
   document.getElementById('progressArea').style.display = 'block';
   document.getElementById('statsRow').style.display = 'grid';
-  document.getElementById('pdfNameBadge').textContent = file.name;
-  document.getElementById('pdfNameBadge').style.display = 'inline-flex';
-  document.getElementById('statusBadge').textContent = '분석 중';
 
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
   const total = pdf.numPages;
-  state.pages = [];
+  S.pages = [];
+  S.pageMap = [];
+  let cursor = 0;
 
   for (let i = 1; i <= total; i++) {
-    setProgress(Math.round(i / total * 80), `텍스트 추출 중... ${i}/${total} 페이지`);
+    setProgress(Math.round(i / total * 85), `텍스트 추출 중... ${i}/${total}`);
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const text = content.items.map(x => x.str).join(' ').trim();
-    state.pages.push({ pageNum: i, text, isImage: text.length < 30 });
+    S.pages.push({ pageNum: i, text, isImage: text.length < 20 });
+    S.pageMap.push({ pageNum: i, start: cursor, end: cursor + text.length });
+    cursor += text.length + 1;
   }
 
-  setProgress(85, '오타 검사 중...');
-  runTypoCheck();
-  setProgress(90, '수치 이상값 검사 중...');
+  setProgress(90, '패턴 오타 검사 중...');
+  runPatternCheck();
+  setProgress(95, '수치 검사 중...');
   runNumberCheck();
-  setProgress(95, '단위 오류 검사 중...');
-  runUnitCheck();
   setProgress(100, '완료');
-
-  state.imagePages = state.pages.filter(p => p.isImage);
 
   updateStats();
   renderSummary();
-  renderTypoContent();
-  renderNumberContent();
-  renderUnitContent();
-  renderImageContent();
-  renderDictPage();
-  renderTypoPatternList();
+  renderPatternResult();
+  renderNumberResult();
+  renderImageResult();
+  renderPatternList();
 
-  document.getElementById('statusBadge').textContent = '분석 완료';
-  showToast('✅', `분석 완료: ${total}페이지 처리`);
+  setStatus('텍스트 추출 완료');
+  toast('✅', `${total}페이지 추출 완료 · AI 검사는 "AI 오타 검사" 메뉴에서`);
 }
 
-async function loadComparePdf(file) {
-  showToast('⏳', '비교 파일 로딩 중...');
+async function loadComparePDF(file) {
+  toast('⏳', '비교 파일 로딩 중...');
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
-  state.comparePages = [];
+  S.comparePages = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const text = content.items.map(x => x.str).join(' ').trim();
-    state.comparePages.push({ pageNum: i, text });
+    S.comparePages.push({ pageNum: i, text: content.items.map(x => x.str).join(' ').trim() });
   }
   runNumberCheck();
-  renderNumberContent();
-  showToast('✅', '비교 파일 로드 완료');
+  renderNumberResult();
+  toast('✅', '비교 파일 로드 완료');
 }
 
-// ── Typo Check ──────────────────────────────────────────
-// 오직 명시적으로 등록된 패턴(잘못된표현→올바른표현)만 검사
-// 레벤슈타인, 반복문자 등 자의적 판단 일절 없음
-function runTypoCheck() {
-  state.typoIssues = [];
-  for (const p of state.pages) {
-    if (p.isImage) continue;
-    for (const pat of typoPatterns) {
-      const re = new RegExp(escapeReg(pat.wrong), 'g');
+// ── Pattern Check ────────────────────────────────────────
+function runPatternCheck() {
+  S.patternIssues = [];
+  for (const pg of S.pages) {
+    if (pg.isImage) continue;
+    for (const pat of patterns) {
+      const re = new RegExp(escRe(pat.wrong), 'g');
       let m;
-      while ((m = re.exec(p.text)) !== null) {
-        state.typoIssues.push({
-          type: 'dict-based',
-          pageNum: p.pageNum,
+      while ((m = re.exec(pg.text)) !== null) {
+        S.patternIssues.push({
+          pageNum: pg.pageNum,
           wrong: pat.wrong,
           correct: pat.correct,
-          context: getContext(p.text, m.index, 80),
-          sev: 'high',
+          context: ctx(pg.text, m.index, 70),
         });
       }
     }
   }
-}
-
-// ── 부산대 맞춤법 검사 (Vercel Edge Function 프록시 경유) ──────────
-async function runPusanSpellCheck() {
-  if (state.pages.length === 0) { showToast('⚠️', 'PDF를 먼저 업로드하세요'); return; }
-  const btn = document.getElementById('btnPusan');
-  const statusEl = document.getElementById('pusanStatus');
-  btn.disabled = true;
-  state.pusanIssues = [];
-
-  const allText = state.pages.filter(p => !p.isImage).map(p => p.text).join('\n');
-
-  // 500자 단위 청크 분할
-  const chunkSize = 500;
-  const chunks = [];
-  let offset = 0;
-  while (offset < allText.length) {
-    const chunk = allText.slice(offset, offset + chunkSize);
-    // 페이지 번호 추정
-    let pageNum = 1, cumLen = 0;
-    for (const pg of state.pages) {
-      cumLen += pg.text.length + 1;
-      if (offset < cumLen) { pageNum = pg.pageNum; break; }
-    }
-    chunks.push({ text: chunk, offset, pageNum });
-    offset += chunkSize;
-  }
-
-  let done = 0;
-  let hasError = false;
-  for (const chunk of chunks) {
-    statusEl.textContent = `검사 중... ${done + 1}/${chunks.length} (${Math.round((done/chunks.length)*100)}%)`;
-    try {
-      const res = await fetch('/api/spell', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: chunk.text }),
-      });
-      if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
-      const data = await res.json();
-
-      if (data.issues && data.issues.length > 0) {
-        for (const issue of data.issues) {
-          const ctx = chunk.text.slice(
-            Math.max(0, chunk.text.indexOf(issue.wrong) - 30),
-            chunk.text.indexOf(issue.wrong) + issue.wrong.length + 30
-          );
-          state.pusanIssues.push({
-            wrong: issue.wrong,
-            correct: issue.correct,
-            pageNum: chunk.pageNum,
-            context: ctx || chunk.text.slice(0, 60),
-          });
-        }
-      }
-      // 부산대 raw HTML 파싱 보조 (이슈 파싱 실패 시 대비)
-      if ((!data.issues || data.issues.length === 0) && data.rawHtml) {
-        const extraIssues = parsePusanRawHtml(data.rawHtml, chunk);
-        state.pusanIssues.push(...extraIssues);
-      }
-    } catch(e) {
-      if (!hasError) {
-        hasError = true;
-        statusEl.textContent = '오류 발생';
-        showToast('❌', '프록시 오류: ' + e.message + ' (Vercel 배포 후 사용 가능)');
-      }
-    }
-    done++;
-    await new Promise(r => setTimeout(r, 200));
-  }
-
-  btn.disabled = false;
-  if (!hasError) {
-    statusEl.textContent = `완료 · ${state.pusanIssues.length}건 발견`;
-    showToast('✅', `맞춤법 검사 완료: ${state.pusanIssues.length}건`);
-  }
-  renderPusanResults();
-  updateStats();
-}
-
-// 부산대 응답 HTML 보조 파서
-function parsePusanRawHtml(html, chunk) {
-  const issues = [];
-  // 방식 1: errinfo input 태그 파싱
-  const inputRe = /name="([^"]*)"[^>]*value="([^"]*)"/gi;
-  const fields = {};
-  let m;
-  while ((m = inputRe.exec(html)) !== null) fields[m[1]] = m[2];
-  if (fields.orgStr && fields.candWord && fields.orgStr !== fields.candWord) {
-    const ctx = chunk.text.slice(
-      Math.max(0, chunk.text.indexOf(fields.orgStr) - 30),
-      chunk.text.indexOf(fields.orgStr) + fields.orgStr.length + 30
-    );
-    issues.push({ wrong: fields.orgStr, correct: fields.candWord, pageNum: chunk.pageNum, context: ctx });
-  }
-  return issues;
-}
-
-
-function renderPusanResults() {
-  const el = document.getElementById('pusanResult');
-  if (!state.pusanIssues || state.pusanIssues.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">맞춤법 오류 없음</div></div>`;
-    return;
-  }
-  el.innerHTML = `<div class="issue-list">${state.pusanIssues.map(i => `
-    <div class="issue-item sev-high">
-      <div class="issue-icon">🔤</div>
-      <div class="issue-content">
-        <div class="issue-title"><span class="highlight">${i.wrong}</span> → <span class="correct">${i.correct}</span></div>
-        <div class="issue-desc">"...${i.context}..."</div>
-        <div class="issue-meta"><span class="issue-page">p.${i.pageNum}</span><span class="issue-tag tag-typo">맞춤법</span></div>
-      </div>
-    </div>`).join('')}</div>`;
 }
 
 // ── Number Check ─────────────────────────────────────────
 function runNumberCheck() {
-  state.numberIssues = [];
-  const threshold = parseInt(document.getElementById('thresholdPct')?.value || '30');
-  const numRe = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)/g;
+  S.numberIssues = [];
+  if (S.comparePages.length === 0) return;
+  const threshold = parseInt(document.getElementById('threshold')?.value || '30');
+  const re = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(tCO₂e|톤|MWh|GWh|kWh|%|명|억원|원)/g;
 
-  if (state.comparePages.length === 0) {
-    // Self-check: find duplicate numbers with large variance
-    const allNums = [];
-    for (const p of state.pages) {
+  const extract = pages => {
+    const map = {};
+    for (const p of pages) {
       let m;
-      while ((m = numRe.exec(p.text)) !== null) {
+      while ((m = re.exec(p.text)) !== null) {
         const val = parseFloat(m[1].replace(/,/g, ''));
-        if (val > 10 && val < 1e10) allNums.push({ val, pageNum: p.pageNum, raw: m[1] });
+        const key = m[2] + '_' + Math.round(val / 100) * 100; // 단위+규모로 매핑
+        if (!map[key]) map[key] = { val, raw: m[1], unit: m[2], pageNum: p.pageNum };
       }
     }
-    // Check if same ~magnitude numbers have big spread (simple heuristic)
-    return;
-  }
+    return map;
+  };
 
-  // Compare with previous year
-  const prevNums = extractNumbersFromPages(state.comparePages);
-  const currNums = extractNumbersFromPages(state.pages);
+  const prev = extract(S.comparePages);
+  const curr = extract(S.pages);
 
-  // Match by rough value proximity
-  for (const [label, curr] of Object.entries(currNums)) {
-    const prev = prevNums[label];
-    if (!prev) continue;
-    const change = Math.abs((curr.val - prev.val) / prev.val) * 100;
+  for (const [key, c] of Object.entries(curr)) {
+    const p = prev[key];
+    if (!p) continue;
+    const change = Math.abs((c.val - p.val) / (p.val || 1)) * 100;
     if (change >= threshold) {
-      const dir = curr.val > prev.val ? 'up' : 'down';
-      state.numberIssues.push({
-        label,
-        prev: prev.val,
-        curr: curr.val,
+      S.numberIssues.push({
+        pageNum: c.pageNum, unit: c.unit,
+        prev: p.val, curr: c.val,
         change: change.toFixed(1),
-        dir,
-        pageNum: curr.pageNum,
-        sev: change >= 50 ? 'high' : 'mid',
+        dir: c.val > p.val ? 'up' : 'down',
       });
     }
   }
 }
 
-function extractNumbersFromPages(pages) {
-  const result = {};
-  const re = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(tCO₂e|톤|MWh|GWh|kWh|%|명|건|억|원)/g;
-  for (const p of pages) {
-    let m;
-    while ((m = re.exec(p.text)) !== null) {
-      const val = parseFloat(m[1].replace(/,/g, ''));
-      const key = m[1] + m[2];
-      if (!result[key]) result[key] = { val, pageNum: p.pageNum, raw: m[1], unit: m[2] };
+// ── AI Check ─────────────────────────────────────────────
+async function runAICheck() {
+  if (S.pages.length === 0) { toast('⚠️', 'PDF를 먼저 업로드하세요'); return; }
+
+  const key = S.apiKey || localStorage.getItem('geminiKey') || '';
+  // Vercel 환경변수 방식 사용 시 키 불필요 (서버가 가짐)
+  // 브라우저 임시키 방식도 지원
+
+  const btn = document.getElementById('btnAI');
+  const statusEl = document.getElementById('aiStatus');
+  btn.disabled = true;
+  statusEl.innerHTML = '<span class="spinner"></span> Gemini 분석 중...';
+
+  const fullText = S.pages.map(p => p.text).join('\n');
+
+  try {
+    // Vercel Edge Function 경유 (GEMINI_API_KEY는 서버에 있음)
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: fullText, pageMap: S.pageMap }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      // 서버 환경변수 없을 때 → 브라우저 키로 직접 시도
+      if (res.status === 500 && key) {
+        await runAIDirect(key, fullText);
+        btn.disabled = false;
+        return;
+      }
+      throw new Error(err.error || res.statusText);
     }
+
+    const data = await res.json();
+    S.aiIssues = data.issues || [];
+    renderAIResult();
+    updateStats();
+    statusEl.textContent = `완료 · ${S.aiIssues.length}건 발견`;
+    toast('✅', `AI 검사 완료: ${S.aiIssues.length}건`);
+
+  } catch (err) {
+    statusEl.textContent = '오류: ' + err.message;
+    document.getElementById('aiResult').innerHTML = `
+      <div class="warn">❌ ${err.message}<br><br>
+      설정 메뉴에서 API 키를 확인하거나, Vercel 환경변수 GEMINI_API_KEY를 설정해주세요.</div>`;
   }
-  return result;
+  btn.disabled = false;
 }
 
-// ── Unit Check ───────────────────────────────────────────
-function runUnitCheck() {
-  state.unitIssues = [];
-  if (!document.getElementById('chkUnit')?.checked) return;
-  for (const p of state.pages) {
-    if (p.isImage) continue;
-    for (const pat of unitPatterns) {
-      if (pat.correct) continue;
-      let m;
-      const re = new RegExp(pat.re.source, pat.re.flags);
-      while ((m = re.exec(p.text)) !== null) {
-        state.unitIssues.push({
-          pageNum: p.pageNum,
-          match: m[0],
-          msg: pat.msg,
-          context: getContext(p.text, m.index, 60),
-          sev: 'mid',
-        });
-      }
-    }
+// 브라우저에서 직접 Gemini 호출 (키 있을 때 대체 수단)
+async function runAIDirect(key, fullText) {
+  const statusEl = document.getElementById('aiStatus');
+  statusEl.innerHTML = '<span class="spinner"></span> Gemini 직접 호출 중...';
+
+  const PROMPT = `당신은 ESG 보고서 전문 교정 AI입니다. 아래 텍스트에서 오타만 찾아 JSON으로 반환하세요.
+찾을 것: 한국어 오타(전기차동차→전기자동차 등), 영어 오타(Intiative→Initiative 등)
+잡지 말 것: 정상 복합어, 약어(ESG CDP SBTi 등), 고유명사
+
+반드시 아래 JSON만 반환:
+{"issues":[{"page":3,"wrong":"Intiative","correct":"Initiative","context":"...","type":"영어오타"}]}
+
+텍스트:\n` + fullText.slice(0, 30000); // 직접 호출 시 일부만 (토큰 절약)
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: PROMPT }] }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+    }),
+  });
+
+  if (!res.ok) throw new Error('Gemini API 오류: ' + res.status);
+  const data = await res.json();
+  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{"issues":[]}';
+  const clean = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  try {
+    const parsed = JSON.parse(clean);
+    S.aiIssues = parsed.issues || [];
+  } catch {
+    S.aiIssues = [];
   }
+  renderAIResult();
+  updateStats();
+  document.getElementById('aiStatus').textContent = `완료 · ${S.aiIssues.length}건 (직접 호출)`;
+  toast('✅', `AI 검사 완료: ${S.aiIssues.length}건`);
 }
 
 // ── Render ───────────────────────────────────────────────
 function updateStats() {
-  document.getElementById('stat-pages').textContent = state.pages.length;
-  document.getElementById('stat-typo').textContent = state.typoIssues.length;
-  document.getElementById('stat-number').textContent = state.numberIssues.length;
-  document.getElementById('stat-image').textContent = state.imagePages.length;
+  document.getElementById('st-pages').textContent = S.pages.length;
 
-  const cn = document.getElementById('cnt-typo');
-  cn.textContent = state.typoIssues.length;
-  cn.className = 'nav-count' + (state.typoIssues.length > 0 ? ' has-error' : '');
+  const ai = S.aiIssues.length;
+  document.getElementById('st-ai').textContent = ai;
+  const cntAI = document.getElementById('cnt-ai');
+  cntAI.textContent = ai; cntAI.className = 'nav-count' + (ai > 0 ? ' red' : '');
 
-  const nn = document.getElementById('cnt-number');
-  nn.textContent = state.numberIssues.length;
-  nn.className = 'nav-count' + (state.numberIssues.length > 0 ? ' has-warn' : '');
+  const pt = S.patternIssues.length;
+  document.getElementById('st-pattern').textContent = pt;
+  const cntPt = document.getElementById('cnt-pattern');
+  cntPt.textContent = pt; cntPt.className = 'nav-count' + (pt > 0 ? ' yellow' : '');
 
-  const un = document.getElementById('cnt-unit');
-  un.textContent = state.unitIssues.length;
-  un.className = 'nav-count' + (state.unitIssues.length > 0 ? ' has-warn' : '');
+  const img = S.pages.filter(p => p.isImage).length;
+  document.getElementById('st-image').textContent = img;
+  document.getElementById('cnt-image').textContent = img;
 
-  const img = document.getElementById('cnt-image');
-  img.textContent = state.imagePages.length;
-  img.className = 'nav-count' + (state.imagePages.length > 0 ? ' has-warn' : '');
+  const num = S.numberIssues.length;
+  document.getElementById('cnt-number').textContent = num;
+  document.getElementById('cnt-number').className = 'nav-count' + (num > 0 ? ' yellow' : '');
 }
 
 function renderSummary() {
-  const el = document.getElementById('summaryList');
   const items = [];
-  if (state.typoIssues.length > 0)
-    items.push(makeIssue('high','🔤',`오타 의심 ${state.typoIssues.length}건 발견`,
-      `사전 기반 검사 결과입니다. <strong>"오타 검사"</strong> 메뉴에서 확인하세요.`,'tag-typo','오타'));
-  if (state.numberIssues.length > 0)
-    items.push(makeIssue('mid','📊',`수치 이상값 ${state.numberIssues.length}건 발견`,
-      `30% 이상 변동 수치입니다. <strong>"수치 이상값"</strong> 메뉴에서 확인하세요.`,'tag-number','수치'));
-  if (state.unitIssues.length > 0)
-    items.push(makeIssue('mid','⚠️',`단위 오류 ${state.unitIssues.length}건 발견`,
-      `단위 혼용 또는 형식 오류입니다. <strong>"단위 오류"</strong> 메뉴에서 확인하세요.`,'tag-unit','단위'));
-  if (state.imagePages.length > 0)
-    items.push(makeIssue('low','🖼️',`이미지 페이지 ${state.imagePages.length}개 발견`,
-      `텍스트 추출 불가 페이지입니다. Gemini Vision API로 추가 분석 가능합니다.`,'tag-image','이미지'));
-  if (items.length === 0)
-    items.push(makeIssue('low','✅','이상 없음','오타 및 단위 오류가 발견되지 않았습니다.','tag-typo','정상'));
-  el.innerHTML = items.join('');
+  if (S.patternIssues.length > 0)
+    items.push(mkSummary('mid','🎯',`패턴 오타 ${S.patternIssues.length}건`,'등록된 패턴으로 검출된 오타입니다.','tb-yellow'));
+  const imgCnt = S.pages.filter(p => p.isImage).length;
+  if (imgCnt > 0)
+    items.push(mkSummary('low','🖼️',`이미지 페이지 ${imgCnt}개`,'AI 검사 시 텍스트 추출 불가 페이지입니다.','tb-blue'));
+  items.push(mkSummary('low','🤖','AI 오타 검사 필요','"AI 오타 검사" 메뉴에서 Gemini 분석을 실행하세요.','tb-blue'));
+  document.getElementById('summaryList').innerHTML = items.join('');
   document.getElementById('summaryArea').style.display = 'block';
 }
 
-function makeIssue(sev, icon, title, desc, tag, tagLabel, page) {
-  return `<div class="issue-item sev-${sev}">
-    <div class="issue-icon">${icon}</div>
-    <div class="issue-content">
+function mkSummary(sev, icon, title, desc, tag) {
+  return `<div class="issue ${sev}">
+    <div style="font-size:18px;flex-shrink:0;">${icon}</div>
+    <div class="issue-body">
       <div class="issue-title">${title}</div>
       <div class="issue-desc">${desc}</div>
-      ${page ? `<div class="issue-meta"><span class="issue-page">p.${page}</span><span class="issue-tag ${tag}">${tagLabel}</span></div>` : `<div class="issue-meta"><span class="issue-tag ${tag}">${tagLabel}</span></div>`}
+      <div class="issue-meta"><span class="type-badge ${tag}">${title.split(' ')[0]}</span></div>
     </div>
   </div>`;
 }
 
-function renderTypoContent() {
-  const el = document.getElementById('typo-content');
-  const cntEl = document.getElementById('patternCount');
-  if (state.pages.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔤</div><div class="empty-title">PDF를 업로드하면 검사가 시작됩니다</div></div>`;
-    if (cntEl) cntEl.textContent = '-'; return;
-  }
-  if (cntEl) cntEl.textContent = state.typoIssues.length + '건';
-  if (state.typoIssues.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">등록된 오타 패턴 미검출</div><div class="empty-sub">용어 사전 메뉴에서 오타 패턴을 추가하면 더 많은 오타를 잡을 수 있습니다</div></div>`;
+function renderAIResult() {
+  const el = document.getElementById('aiResult');
+  if (S.aiIssues.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">오타 없음</div><div class="empty-sub">Gemini가 검사했으나 오타를 발견하지 못했습니다</div></div>`;
     return;
   }
-  el.innerHTML = `<div class="issue-list">${state.typoIssues.map(i => `
-    <div class="issue-item sev-${i.sev}">
-      <div class="issue-icon">🔤</div>
-      <div class="issue-content">
-        <div class="issue-title"><span class="highlight">${i.wrong}</span> → <span class="correct">${i.correct}</span></div>
-        <div class="issue-desc">"...${i.context}..."</div>
-        <div class="issue-meta"><span class="issue-page">p.${i.pageNum}</span><span class="issue-tag tag-typo">패턴 오타</span></div>
+  el.innerHTML = `<div class="issue-list">${S.aiIssues.map(i => `
+    <div class="issue high">
+      <div style="font-size:18px;flex-shrink:0;">🤖</div>
+      <div class="issue-body">
+        <div class="issue-title"><span class="wrong">${esc(i.wrong)}</span> → <span class="correct">${esc(i.correct)}</span></div>
+        <div class="issue-desc">${i.context ? `"...${esc(i.context)}..."` : ''}</div>
+        <div class="issue-meta">
+          <span class="page-badge">p.${i.page || '?'}</span>
+          <span class="type-badge tb-red">${esc(i.type || 'AI검출')}</span>
+        </div>
       </div>
     </div>`).join('')}</div>`;
 }
-function renderNumberContent() {
-  const el = document.getElementById('number-content');
-  if (state.pages.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">PDF를 업로드하면 수치 분석이 시작됩니다</div></div>`;
+
+function renderPatternResult() {
+  const el = document.getElementById('patternResult');
+  if (S.pages.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🎯</div><div class="empty-title">PDF를 업로드하면 자동 실행됩니다</div></div>`;
     return;
   }
-  if (state.numberIssues.length === 0) {
-    let msg = state.comparePages.length === 0
-      ? '전년도 보고서를 위에서 업로드하면 수치 비교 분석이 가능합니다.'
-      : '30% 이상 변동된 수치가 없습니다.';
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">${msg}</div></div>`;
+  if (S.patternIssues.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">등록된 패턴 오타 없음</div><div class="empty-sub">오타 패턴 사전 메뉴에서 패턴을 추가하세요</div></div>`;
     return;
   }
-  el.innerHTML = `<div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden;">
-    <table class="compare-table">
-      <thead><tr><th>항목</th><th>전년도</th><th>당해연도</th><th>변동률</th><th>페이지</th></tr></thead>
-      <tbody>${state.numberIssues.map(n => `<tr>
-        <td>${n.label}</td>
-        <td style="font-family:'JetBrains Mono',monospace">${n.prev.toLocaleString()}</td>
-        <td style="font-family:'JetBrains Mono',monospace">${n.curr.toLocaleString()}</td>
-        <td class="${n.dir === 'up' ? 'change-up' : 'change-down'}">${n.dir === 'up' ? '▲' : '▼'} ${n.change}%</td>
-        <td><span class="issue-page">p.${n.pageNum}</span></td>
+  el.innerHTML = `<div class="issue-list">${S.patternIssues.map(i => `
+    <div class="issue mid">
+      <div style="font-size:18px;flex-shrink:0;">🎯</div>
+      <div class="issue-body">
+        <div class="issue-title"><span class="wrong">${esc(i.wrong)}</span> → <span class="correct">${esc(i.correct)}</span></div>
+        <div class="issue-desc">"...${esc(i.context)}..."</div>
+        <div class="issue-meta"><span class="page-badge">p.${i.pageNum}</span><span class="type-badge tb-yellow">패턴오타</span></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderNumberResult() {
+  const el = document.getElementById('numberResult');
+  if (S.pages.length === 0) { el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">PDF를 업로드하면 자동 실행됩니다</div></div>`; return; }
+  if (S.comparePages.length === 0) { el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">전년도 PDF를 업로드하면 수치 비교가 가능합니다</div></div>`; return; }
+  if (S.numberIssues.length === 0) { el.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">이상 수치 없음</div></div>`; return; }
+  el.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:var(--bg3);">
+        <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);">단위</th>
+        <th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);">전년도</th>
+        <th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);">당해연도</th>
+        <th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);">변동률</th>
+        <th style="padding:8px 12px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);">페이지</th>
+      </tr></thead>
+      <tbody>${S.numberIssues.map(n => `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);">${n.unit}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:right;font-family:'JetBrains Mono',monospace;">${n.prev.toLocaleString()}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:right;font-family:'JetBrains Mono',monospace;">${n.curr.toLocaleString()}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:${n.dir==='up'?'var(--red)':'var(--green)'};">${n.dir==='up'?'▲':'▼'} ${n.change}%</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);"><span class="page-badge">p.${n.pageNum}</span></td>
       </tr>`).join('')}</tbody>
     </table>
   </div>`;
 }
 
-function renderUnitContent() {
-  const el = document.getElementById('unit-content');
-  if (state.pages.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">PDF를 업로드하면 단위 오류 검사가 시작됩니다</div></div>`;
-    return;
-  }
-  if (state.unitIssues.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">단위 오류가 발견되지 않았습니다</div></div>`;
-    return;
-  }
-  el.innerHTML = `<div class="issue-list">${state.unitIssues.map(u => `
-    <div class="issue-item sev-${u.sev}">
-      <div class="issue-icon">⚠️</div>
-      <div class="issue-content">
-        <div class="issue-title"><span class="highlight">${u.match}</span></div>
-        <div class="issue-desc">${u.msg}<br><small style="color:var(--text3)">"...${u.context}..."</small></div>
-        <div class="issue-meta"><span class="issue-page">p.${u.pageNum}</span><span class="issue-tag tag-unit">단위</span></div>
-      </div>
-    </div>`).join('')}</div>`;
+function renderImageResult() {
+  const imgs = S.pages.filter(p => p.isImage);
+  const el = document.getElementById('imageResult');
+  if (imgs.length === 0) { el.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">이미지 전용 페이지 없음</div></div>`; return; }
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;">
+    ${imgs.map(p => `<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px;text-align:center;font-size:12px;color:var(--text3);">🖼️ p.${p.pageNum}</div>`).join('')}
+  </div>`;
 }
 
-function renderImageContent() {
-  const el = document.getElementById('image-content');
-  const actions = document.getElementById('image-api-actions');
-  if (state.imagePages.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">이미지 전용 페이지가 없습니다</div><div class="empty-sub">모든 페이지에서 텍스트 추출에 성공했습니다</div></div>`;
-    actions.style.display = 'none';
-    return;
-  }
-  actions.style.display = 'block';
-  document.getElementById('imagePageCount').textContent = `이미지 페이지 ${state.imagePages.length}개 발견 · API ${state.imagePages.length}회 필요`;
-  const analyzed = state.imageResults.map(r => r.pageNum);
-  el.innerHTML = `
-    <div class="image-page-grid" style="margin-bottom:16px;">${state.imagePages.map(p => `
-      <div class="image-page-chip ${analyzed.includes(p.pageNum) ? 'analyzed' : 'pending'}">
-        ${analyzed.includes(p.pageNum) ? '✅' : '🖼️'} p.${p.pageNum}
-      </div>`).join('')}
-    </div>
-    ${state.imageResults.length > 0 ? `<div class="issue-list">${state.imageResults.map(r => `
-      <div class="issue-item sev-${r.issues.length > 0 ? 'mid' : 'low'}">
-        <div class="issue-icon">🖼️</div>
-        <div class="issue-content">
-          <div class="issue-title">p.${r.pageNum} 이미지 분석 결과</div>
-          <div class="issue-desc" style="white-space:pre-wrap">${r.result}</div>
-          <div class="issue-meta"><span class="issue-page">p.${r.pageNum}</span><span class="issue-tag tag-image">Gemini Vision</span></div>
-        </div>
-      </div>`).join('')}</div>` : ''}`;
-}
-
-// ── Dictionary ───────────────────────────────────────────
-function renderDictPage() {
-  const el = document.getElementById('dictTags');
-  el.innerHTML = dict.map((w, i) => `
-    <div class="dict-tag">${w} <span class="remove" onclick="removeDictWord(${i})">×</span></div>
-  `).join('');
-  renderTypoPatternList();
-}
-function addDictWord() {
-  const v = document.getElementById('dictInput').value.trim();
-  if (!v) return;
-  if (!dict.includes(v)) { dict.push(v); saveDictStore(); renderDictPage(); }
-  document.getElementById('dictInput').value = '';
-}
-function removeDictWord(i) {
-  dict.splice(i, 1);
-  saveDictStore();
-  renderDictPage();
-}
-function resetDict() {
-  dict = ['코웨이','지속가능경영','온실가스','탄소중립','넷제로','재생에너지','전기차','태양광','GHG','ESG','CDP'];
-  saveDictStore();
-  renderDictPage();
-  showToast('✅','사전이 초기화되었습니다');
-}
-function saveDictStore() { localStorage.setItem('esgDict', JSON.stringify(dict)); }
-
-function renderTypoPatternList() {
-  const el = document.getElementById('typoPatternList');
+function renderPatternList() {
+  const el = document.getElementById('patternList');
   if (!el) return;
-  el.innerHTML = typoPatterns.map((p, i) => `
-    <div class="issue-item sev-high" style="padding:8px 12px;">
-      <div class="issue-content" style="display:flex; align-items:center; gap:10px; flex-direction:row;">
-        <span class="highlight">${p.wrong}</span>
+  el.innerHTML = patterns.map((p, i) => `
+    <div class="issue low" style="padding:8px 12px;">
+      <div class="issue-body" style="display:flex;align-items:center;gap:10px;">
+        <span class="wrong">${esc(p.wrong)}</span>
         <span style="color:var(--text3)">→</span>
-        <span class="correct">${p.correct}</span>
-        <button class="btn btn-danger" onclick="removeTypoPattern(${i})" style="margin-left:auto; padding:3px 8px; font-size:11px;">삭제</button>
+        <span class="correct">${esc(p.correct)}</span>
+        <button class="btn btn-secondary" onclick="removePattern(${i})" style="margin-left:auto;padding:3px 8px;font-size:11px;color:var(--red);">삭제</button>
       </div>
     </div>`).join('');
 }
-function addTypoPattern() {
-  const w = document.getElementById('typoWrongInput').value.trim();
-  const c = document.getElementById('typoCorrectInput').value.trim();
-  if (!w || !c) return;
-  typoPatterns.push({ wrong: w, correct: c });
-  localStorage.setItem('typoPatterns', JSON.stringify(typoPatterns));
-  document.getElementById('typoWrongInput').value = '';
-  document.getElementById('typoCorrectInput').value = '';
-  renderTypoPatternList();
-  showToast('✅', '오타 패턴이 추가되었습니다');
+
+function addPattern() {
+  const w = document.getElementById('wrongInput').value.trim();
+  const c = document.getElementById('correctInput').value.trim();
+  if (!w || !c) { toast('⚠️', '잘못된 표현과 올바른 표현을 모두 입력하세요'); return; }
+  patterns.push({ wrong: w, correct: c });
+  localStorage.setItem('typoPatterns', JSON.stringify(patterns));
+  document.getElementById('wrongInput').value = '';
+  document.getElementById('correctInput').value = '';
+  renderPatternList();
+  toast('✅', '패턴 추가됨');
 }
-function removeTypoPattern(i) {
-  typoPatterns.splice(i, 1);
-  localStorage.setItem('typoPatterns', JSON.stringify(typoPatterns));
-  renderTypoPatternList();
+function removePattern(i) {
+  patterns.splice(i, 1);
+  localStorage.setItem('typoPatterns', JSON.stringify(patterns));
+  renderPatternList();
 }
 
-// ── API ──────────────────────────────────────────────────
-function saveApiKey() {
-  const key = document.getElementById('geminiApiKey').value.trim();
-  if (!key) return;
-  state.geminiKey = key;
-  localStorage.setItem('geminiKey', key);
-  document.getElementById('apiStatusBadge').textContent = '설정됨';
-  document.getElementById('apiStatusBadge').className = 'badge badge-green';
-  showToast('✅', 'API 키가 저장되었습니다');
+// ── API Key ──────────────────────────────────────────────
+function saveKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k) return;
+  S.apiKey = k;
+  localStorage.setItem('geminiKey', k);
+  toast('✅', 'API 키 저장됨 (브라우저 임시 저장)');
 }
-async function testApiKey() {
-  const key = document.getElementById('geminiApiKey').value.trim() || state.geminiKey;
-  if (!key) { showToast('⚠️', 'API 키를 먼저 입력하세요'); return; }
-  const res = document.getElementById('apiTestResult');
-  res.textContent = '테스트 중...';
+async function testKey() {
+  const k = document.getElementById('apiKeyInput').value.trim() || S.apiKey;
+  if (!k) { toast('⚠️', 'API 키를 먼저 입력하세요'); return; }
+  const el = document.getElementById('keyTestResult');
+  el.textContent = '테스트 중...';
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-    if (r.ok) {
-      res.textContent = '✅ API 키가 유효합니다';
-      res.style.color = 'var(--green)';
-    } else {
-      res.textContent = '❌ 유효하지 않은 API 키입니다';
-      res.style.color = 'var(--red)';
-    }
-  } catch(e) {
-    res.textContent = '❌ 연결 실패: ' + e.message;
-    res.style.color = 'var(--red)';
-  }
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
+    el.textContent = r.ok ? '✅ 유효한 API 키입니다' : '❌ 유효하지 않은 키';
+    el.style.color = r.ok ? 'var(--green)' : 'var(--red)';
+  } catch(e) { el.textContent = '❌ ' + e.message; el.style.color = 'var(--red)'; }
 }
 
-async function analyzeImagePages() {
-  if (!state.geminiKey) {
-    showToast('⚠️', 'API 키를 먼저 설정하세요 (API 설정 메뉴)');
-    showPage('api');
-    return;
-  }
-  const btn = document.getElementById('btnAnalyzeImages');
-  const status = document.getElementById('imageAnalyzeStatus');
-  btn.disabled = true;
-  state.imageResults = [];
-
-  // Re-load PDF to get page canvases
-  const fileInput = document.querySelector('#page-upload input[type=file]');
-  if (!fileInput.files[0]) { showToast('⚠️', 'PDF 파일을 다시 업로드해주세요'); btn.disabled = false; return; }
-  const ab = await fileInput.files[0].arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
-
-  for (let idx = 0; idx < state.imagePages.length; idx++) {
-    const pg = state.imagePages[idx];
-    status.textContent = `분석 중... ${idx+1}/${state.imagePages.length}`;
-    try {
-      const page = await pdf.getPage(pg.pageNum);
-      const vp = page.getViewport({ scale: 1.5 });
-      const canvas = document.createElement('canvas');
-      canvas.width = vp.width; canvas.height = vp.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-      const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.geminiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: '당신은 한국어 ESG 보고서 전문 교정자입니다. 이 이미지에서 다음을 검사하고 발견된 문제만 한국어로 답하세요:\n1. 한국어 오타 또는 맞춤법 오류\n2. 단위 오류 (tCO₂e, 톤, % 혼용 등)\n3. 숫자 표기 오류\n문제가 없으면 "이상 없음"이라고만 답하세요.' },
-              { inline_data: { mime_type: 'image/jpeg', data: b64 } }
-            ]
-          }]
-        })
-      });
-      const data = await resp.json();
-      const result = data.candidates?.[0]?.content?.parts?.[0]?.text || '분석 결과 없음';
-      state.imageResults.push({ pageNum: pg.pageNum, result, issues: result !== '이상 없음' ? [result] : [] });
-    } catch(e) {
-      state.imageResults.push({ pageNum: pg.pageNum, result: '분석 실패: ' + e.message, issues: [] });
-    }
-    renderImageContent();
-  }
-  btn.disabled = false;
-  status.textContent = `완료 (${state.imagePages.length}페이지 분석)`;
-  showToast('✅', 'Gemini Vision 분석 완료');
-}
-
-// ── Utilities ────────────────────────────────────────────
+// ── Utils ────────────────────────────────────────────────
 function setProgress(pct, label) {
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressLabel').textContent = label;
   document.getElementById('progressPct').textContent = pct + '%';
 }
-function getContext(text, idx, len) {
-  const start = Math.max(0, idx - len/2);
-  const end = Math.min(text.length, idx + len/2);
-  return text.slice(start, end).replace(/\s+/g, ' ').trim();
+function setStatus(s) { document.getElementById('statusBadge').textContent = s; }
+function ctx(text, idx, len) {
+  return text.slice(Math.max(0, idx - len/2), Math.min(text.length, idx + len/2)).replace(/\s+/g, ' ').trim();
 }
-function getWordContext(text, word, len) {
-  const idx = text.indexOf(word);
-  if (idx < 0) return '';
-  return getContext(text, idx, len);
-}
-function escapeReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-function showToast(icon, msg) {
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(icon, msg) {
   const t = document.getElementById('toast');
   document.getElementById('toastIcon').textContent = icon;
   document.getElementById('toastMsg').textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 3500);
 }
 
 // ── Init ─────────────────────────────────────────────────
-window.onload = () => {
-  renderDictPage();
-  if (state.geminiKey) {
-    document.getElementById('geminiApiKey').value = state.geminiKey;
-    document.getElementById('apiStatusBadge').textContent = '설정됨';
-    document.getElementById('apiStatusBadge').className = 'badge badge-green';
-  }
-};
+renderPatternList();
+if (S.apiKey) document.getElementById('apiKeyInput').value = S.apiKey;
 </script>
 </body>
 </html>
