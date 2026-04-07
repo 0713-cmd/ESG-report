@@ -202,7 +202,7 @@ body { font-family:'Pretendard',-apple-system,sans-serif; background:var(--bg); 
     <!-- AI 오타 검사 -->
     <div class="page" id="page-ai">
       <div class="info">
-        🤖 <strong>Gemini 1.5 Pro</strong>가 전체 보고서를 읽고 한국어·영어 오타를 찾아냅니다.<br>
+        🤖 <strong>Gemini 1.5 Flash</strong>가 전체 보고서를 읽고 한국어·영어 오타를 찾아냅니다.<br>
         PDF 업로드 후 아래 버튼을 누르세요. 설정 메뉴에서 API 키를 먼저 등록해야 합니다.
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
@@ -531,7 +531,7 @@ async function runAIDirect(key, fullText) {
 
 텍스트:\n` + fullText.slice(0, 30000); // 직접 호출 시 일부만 (토큰 절약)
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${key}`, {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
